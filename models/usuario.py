@@ -29,7 +29,7 @@ def listar_tecnicos():
 
 
 def listar_todos():
-    res = supabase.table("usuarios").select("*").order("nome").execute()
+    res = supabase.table("usuarios").select("*").eq("ativo", True).order("nome").execute()
     return res.data or []
 
 

@@ -1,5 +1,9 @@
 /* Controle de Viagem — JS principal */
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+}
+
 // Auto-dismiss flash messages
 document.addEventListener('DOMContentLoaded', () => {
   const flashes = document.querySelectorAll('.flash');
