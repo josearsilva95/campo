@@ -181,9 +181,9 @@ def aprovar_encerramento(
 
 def excluir_viagem(viagem_id: str):
     supabase.table("gastos").delete().eq("viagem_id", viagem_id).execute()
-    supabase.table("registros_hora").delete().eq("viagem_id", viagem_id).execute()
+    supabase.table("pontos").delete().eq("viagem_id", viagem_id).execute()
     supabase.table("paradas").delete().eq("viagem_id", viagem_id).execute()
-    supabase.table("checklist").delete().eq("viagem_id", viagem_id).execute()
+    supabase.table("checklists").delete().eq("viagem_id", viagem_id).execute()
     supabase.table("tecnicos_viagem").delete().eq("viagem_id", viagem_id).execute()
     supabase.table("viagens").delete().eq("id", viagem_id).execute()
 
