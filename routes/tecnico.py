@@ -8,6 +8,7 @@ from models.gasto import listar_gastos, lancar_gasto, deletar_gasto, upload_foto
 from models.ponto import registrar_ponto, buscar_ponto, historico_pontos, total_horas_viagem
 from models.parada import listar_paradas
 from models.checklist import buscar_checklist, salvar_checklist, CAMPOS_BOOL
+from models.notificacao import buscar_nao_lidas, marcar_todas_lidas, marcar_lida
 
 tecnico_bp = Blueprint("tecnico", __name__, url_prefix="/tecnico")
 
@@ -43,7 +44,22 @@ def verificar_acesso_viagem(viagem_id: str, usuario_id: str):
 def dashboard():
     uid = session["usuario_id"]
     viagens = vm.todas_viagens_do_tecnico(uid)
-    return render_template("tecnico/dashboard.html", viagens=viagens)
+    notificacoes = buscar_nao_lidas(uid)
+    return render_template("tecnico/dashboard.html", viagens=viagens, notificacoes=notificacoes)
+
+
+@tecnico_bp.route("/notificacoes/marcar-lidas", methods=["POST"])
+@requer_login
+def marcar_notificacoes_lidas():
+    marcar_todas_lidas(session["usuario_id"])
+    return redirect(url_for("tecnico.dashboard"))
+
+
+@tecnico_bp.route("/notificacoes/<nid>/lida", methods=["POST"])
+@requer_login
+def marcar_notificacao_lida(nid):
+    marcar_lida(nid)
+    return redirect(request.referrer or url_for("tecnico.dashboard"))
 
 
 # ── Detalhe da viagem ────────────────────────────────────────

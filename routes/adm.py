@@ -6,6 +6,7 @@ from models import usuario as um
 from models.gasto import listar_gastos, gastos_por_categoria
 from models.parada import adicionar_parada, listar_paradas, marcar_notificado
 from models.checklist import buscar_checklist
+from models.notificacao import criar_notificacao
 from routes.whatsapp import (
     enviar_whatsapp,
     msg_escalar_tecnico,
@@ -80,35 +81,38 @@ def nova_viagem():
             if mid != dados["responsavel_id"]:
                 vm.adicionar_tecnico_viagem(viagem_id, mid)
 
-        # WhatsApp — responsável
+        # Notificações + WhatsApp — responsável
         responsavel = um.buscar_por_id(dados["responsavel_id"])
-        if responsavel and responsavel.get("telefone"):
-            mensagem = msg_escalar_tecnico(
-                nome=responsavel["nome"],
-                obra=dados["obra"],
-                data_saida=dados["data_saida"],
-                carro=dados["carro"],
-                placa=dados["placa"],
-                funcao="Responsável",
-                valor_caixa=dados["caixa_valor"],
+        if responsavel:
+            criar_notificacao(
+                dados["responsavel_id"],
+                "nova_viagem",
+                f"Você foi escalado como Responsável na viagem para {dados['obra']} — saída em {dados['data_saida']}.",
+                viagem_id,
             )
-            enviar_whatsapp(responsavel["telefone"], mensagem)
+            if responsavel.get("telefone"):
+                enviar_whatsapp(responsavel["telefone"], msg_escalar_tecnico(
+                    nome=responsavel["nome"], obra=dados["obra"],
+                    data_saida=dados["data_saida"], carro=dados["carro"],
+                    placa=dados["placa"], funcao="Responsável", valor_caixa=dados["caixa_valor"],
+                ))
 
-        # WhatsApp — membros
+        # Notificações + WhatsApp — membros
         for mid in membros_ids:
             if mid != dados["responsavel_id"]:
+                criar_notificacao(
+                    mid,
+                    "nova_viagem",
+                    f"Você foi escalado para a viagem {dados['obra']} — saída em {dados['data_saida']}.",
+                    viagem_id,
+                )
                 tecnico = um.buscar_por_id(mid)
                 if tecnico and tecnico.get("telefone"):
-                    mensagem = msg_escalar_tecnico(
-                        nome=tecnico["nome"],
-                        obra=dados["obra"],
-                        data_saida=dados["data_saida"],
-                        carro=dados["carro"],
-                        placa=dados["placa"],
-                        funcao="Técnico",
-                        valor_caixa=dados["caixa_valor"],
-                    )
-                    enviar_whatsapp(tecnico["telefone"], mensagem)
+                    enviar_whatsapp(tecnico["telefone"], msg_escalar_tecnico(
+                        nome=tecnico["nome"], obra=dados["obra"],
+                        data_saida=dados["data_saida"], carro=dados["carro"],
+                        placa=dados["placa"], funcao="Técnico", valor_caixa=dados["caixa_valor"],
+                    ))
 
         flash("Viagem criada com sucesso!", "success")
         return redirect(url_for("adm.viagem_detalhe", id=viagem_id))
@@ -210,9 +214,15 @@ def add_parada(id):
 
     # Notificar responsável
     responsavel = um.buscar_por_id(viagem["responsavel_id"])
-    if responsavel and responsavel.get("telefone"):
-        mensagem = msg_nova_parada(viagem["obra"], local, tipo, instrucoes)
-        enviar_whatsapp(responsavel["telefone"], mensagem)
+    if responsavel:
+        criar_notificacao(
+            viagem["responsavel_id"],
+            "nova_parada",
+            f"Nova parada adicionada na viagem {viagem['obra']}: {local} ({tipo}).",
+            id,
+        )
+        if responsavel.get("telefone"):
+            enviar_whatsapp(responsavel["telefone"], msg_nova_parada(viagem["obra"], local, tipo, instrucoes))
         if parada:
             marcar_notificado(parada["id"])
 
@@ -269,11 +279,17 @@ def aprovar_encerramento(id):
     else:
         vm.aprovar_encerramento(id, data_retorno_real, saldo_devolvido=saldo_devolvido)
 
-    # WhatsApp — responsável
+    # Notificar responsável
     responsavel = um.buscar_por_id(viagem["responsavel_id"])
-    if responsavel and responsavel.get("telefone"):
-        mensagem = msg_encerramento_aprovado(viagem["obra"], data_retorno_real)
-        enviar_whatsapp(responsavel["telefone"], mensagem)
+    if responsavel:
+        criar_notificacao(
+            viagem["responsavel_id"],
+            "encerramento_aprovado",
+            f"Seu encerramento da viagem {viagem['obra']} foi aprovado pelo gestor.",
+            id,
+        )
+        if responsavel.get("telefone"):
+            enviar_whatsapp(responsavel["telefone"], msg_encerramento_aprovado(viagem["obra"], data_retorno_real))
 
     flash("Encerramento aprovado com sucesso!", "success")
     return redirect(url_for("adm.dashboard"))
