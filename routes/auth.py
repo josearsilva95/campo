@@ -13,7 +13,12 @@ def login():
         email = request.form.get("email", "").strip().lower()
         senha = request.form.get("senha", "")
 
-        usuario = buscar_por_email(email)
+        try:
+            usuario = buscar_por_email(email)
+        except Exception as e:
+            flash(f"Erro de conexão com banco de dados: {e}", "error")
+            return render_template("login.html")
+
         if usuario and verificar_senha(senha, usuario["senha_hash"]):
             session["usuario_id"] = usuario["id"]
             session["nome"] = usuario["nome"]
