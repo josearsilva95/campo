@@ -47,6 +47,9 @@
           <a href="{{ url_for('adm.galeria_fotos') }}" class="nav-link {% if request.endpoint == 'adm.galeria_fotos' %}active{% endif %}">
             <i class="ti ti-photo"></i> Notas
           </a>
+          <a href="{{ url_for('adm.relatorio_anual') }}" class="nav-link {% if request.endpoint == 'adm.relatorio_anual' %}active{% endif %}">
+            <i class="ti ti-chart-bar"></i> Balanço
+          </a>
         {% else %}
           <a href="{{ url_for('tecnico.dashboard') }}" class="nav-link {% if request.endpoint == 'tecnico.dashboard' %}active{% endif %}">
             <i class="ti ti-layout-dashboard"></i> Minhas Viagens

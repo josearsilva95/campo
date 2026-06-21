@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 from models import viagem as vm
 from models import usuario as um
-from models.gasto import listar_gastos, gastos_por_categoria, listar_todos_gastos_com_foto
+from models.gasto import listar_gastos, gastos_por_categoria, listar_todos_gastos_com_foto, resumo_anual
 from models.parada import adicionar_parada, listar_paradas, marcar_notificado
 from models.checklist import buscar_checklist
 from models.notificacao import criar_notificacao
@@ -293,6 +293,27 @@ def aprovar_encerramento(id):
 
     flash("Encerramento aprovado com sucesso!", "success")
     return redirect(url_for("adm.dashboard"))
+
+
+# ── Relatório anual ──────────────────────────────────────────
+@adm_bp.route("/relatorio-anual")
+@requer_adm
+def relatorio_anual():
+    from datetime import datetime
+    import json
+    ano = int(request.args.get("ano", datetime.now().year))
+    anos_disponiveis = list(range(datetime.now().year, datetime.now().year - 5, -1))
+    resumo = resumo_anual(ano)
+    viagens = vm.listar_viagens()
+    total_viagens = len([v for v in viagens if str(v.get("data_saida", "")).startswith(str(ano))])
+    return render_template(
+        "adm/relatorio_anual.html",
+        ano=ano,
+        anos=anos_disponiveis,
+        resumo=resumo,
+        total_viagens=total_viagens,
+        resumo_json=json.dumps(resumo),
+    )
 
 
 # ── Galeria de notas fiscais ─────────────────────────────────

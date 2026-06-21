@@ -7,6 +7,54 @@ BUCKET = "notas"
 MAX_PX = 1200
 
 
+def resumo_anual(ano: int):
+    res = (
+        supabase.table("gastos")
+        .select("valor, categoria, created_at, viagem:viagens(id, obra, status, data_saida)")
+        .execute()
+    )
+    gastos = res.data or []
+
+    por_categoria: dict[str, float] = {}
+    por_mes: dict[int, float] = {}
+    por_viagem: dict[str, dict] = {}
+    total_geral = 0.0
+
+    for g in gastos:
+        data = g.get("created_at", "")[:10]
+        if not data.startswith(str(ano)):
+            continue
+        valor = float(g["valor"])
+        mes = int(data[5:7])
+        cat = g["categoria"]
+        viagem = g.get("viagem") or {}
+        vid = viagem.get("id", "")
+
+        total_geral += valor
+        por_categoria[cat] = por_categoria.get(cat, 0) + valor
+        por_mes[mes] = por_mes.get(mes, 0) + valor
+
+        if vid not in por_viagem:
+            por_viagem[vid] = {
+                "obra": viagem.get("obra", "—"),
+                "status": viagem.get("status", ""),
+                "data_saida": viagem.get("data_saida", ""),
+                "total": 0.0,
+            }
+        por_viagem[vid]["total"] += valor
+
+    meses_labels = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
+    por_mes_lista = [round(por_mes.get(m, 0), 2) for m in range(1, 13)]
+
+    return {
+        "total_geral": round(total_geral, 2),
+        "por_categoria": {k: round(v, 2) for k, v in sorted(por_categoria.items(), key=lambda x: -x[1])},
+        "por_mes": por_mes_lista,
+        "meses_labels": meses_labels,
+        "por_viagem": sorted(por_viagem.values(), key=lambda x: -x["total"]),
+    }
+
+
 def listar_todos_gastos_com_foto():
     res = (
         supabase.table("gastos")
