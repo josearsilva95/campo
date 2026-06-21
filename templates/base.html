@@ -92,5 +92,71 @@
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block scripts %}{% endblock %}
+
+  {% if session.get('usuario_id') %}
+  <!-- Aviso de inatividade -->
+  <div id="aviso-inatividade" style="
+    display:none;position:fixed;inset:0;z-index:9999;
+    background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;
+  ">
+    <div style="
+      background:#fff;border-radius:18px;padding:36px 32px;
+      max-width:340px;width:90%;text-align:center;
+      box-shadow:0 24px 64px rgba(0,0,0,.2);
+    ">
+      <div style="font-size:44px;margin-bottom:12px">⏱️</div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#0A0F1E;letter-spacing:1px;margin-bottom:8px">Sessão expirando</div>
+      <div style="font-size:14px;color:#6b7280;margin-bottom:20px">Você ficou inativo. Saindo em <span id="countdown-seg">30</span>s…</div>
+      <button onclick="resetarInatividade()" style="
+        background:linear-gradient(135deg,#2563EB,#06B6D4);color:#fff;
+        border:none;border-radius:10px;padding:12px 28px;
+        font-size:14px;font-weight:700;cursor:pointer;width:100%;
+      ">Continuar sessão</button>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const INATIVO_MS   = 5 * 60 * 1000;   // 5 minutos
+    const AVISO_MS     = 30 * 1000;        // aviso 30s antes
+    const LOGOUT_URL   = "{{ url_for('auth.logout') }}";
+
+    let timerAviso   = null;
+    let timerLogout  = null;
+    let timerCont    = null;
+    let segsRestantes = 30;
+
+    const overlay  = document.getElementById('aviso-inatividade');
+    const contEl   = document.getElementById('countdown-seg');
+
+    function mostrarAviso(){
+      overlay.style.display = 'flex';
+      segsRestantes = 30;
+      contEl.textContent = segsRestantes;
+      timerCont = setInterval(() => {
+        segsRestantes--;
+        contEl.textContent = segsRestantes;
+        if(segsRestantes <= 0) clearInterval(timerCont);
+      }, 1000);
+      timerLogout = setTimeout(() => { window.location.href = LOGOUT_URL; }, AVISO_MS);
+    }
+
+    window.resetarInatividade = function(){
+      clearTimeout(timerAviso);
+      clearTimeout(timerLogout);
+      clearInterval(timerCont);
+      overlay.style.display = 'none';
+      timerAviso = setTimeout(mostrarAviso, INATIVO_MS - AVISO_MS);
+    };
+
+    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(ev => {
+      document.addEventListener(ev, resetarInatividade, { passive: true });
+    });
+
+    timerAviso = setTimeout(mostrarAviso, INATIVO_MS - AVISO_MS);
+  })();
+  </script>
+  {% endif %}
 </body>
 </html>
