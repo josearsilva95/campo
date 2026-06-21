@@ -10,32 +10,32 @@
 </div>
 
 {% if notificacoes %}
-<div style="margin-bottom:1.5rem">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-    <h3 style="font-size:.9rem;font-weight:700;color:#92400e;display:flex;align-items:center;gap:.4rem">
-      <i class="ti ti-bell-ringing" style="font-size:1.1rem"></i>
+<div class="notif-wrap">
+  <div class="notif-header">
+    <span class="notif-title">
+      <i class="ti ti-bell-ringing"></i>
       {{ notificacoes|length }} notificação{% if notificacoes|length > 1 %}ões{% endif %} não lida{% if notificacoes|length > 1 %}s{% endif %}
-    </h3>
+    </span>
     <form method="POST" action="{{ url_for('tecnico.marcar_notificacoes_lidas') }}" style="display:inline">
-      <button type="submit" style="background:none;border:none;color:#92400e;font-size:.8rem;cursor:pointer;text-decoration:underline">
+      <button type="submit" style="background:none;border:none;color:#92400e;font-size:10px;cursor:pointer;text-decoration:underline;font-weight:700">
         Marcar todas como lidas
       </button>
     </form>
   </div>
   {% for n in notificacoes %}
-  <div style="background:#fffbeb;border:1px solid #fcd34d;border-left:4px solid #f59e0b;border-radius:8px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+  <div class="notif-item">
     <div>
-      <div style="font-size:.75rem;color:#92400e;font-weight:600;margin-bottom:.2rem">
+      <div class="notif-tipo">
         {% if n.tipo == 'nova_viagem' %}<i class="ti ti-map-pin"></i> Nova Viagem
         {% elif n.tipo == 'nova_parada' %}<i class="ti ti-route"></i> Nova Parada
         {% elif n.tipo == 'encerramento_aprovado' %}<i class="ti ti-circle-check"></i> Encerramento Aprovado
         {% endif %}
         · {{ n.created_at[:10] }}
       </div>
-      <div style="font-size:.9rem;color:#1e293b">{{ n.mensagem }}</div>
+      <div class="notif-msg">{{ n.mensagem }}</div>
     </div>
     <form method="POST" action="{{ url_for('tecnico.marcar_notificacao_lida', nid=n.id) }}" style="flex-shrink:0">
-      <button type="submit" title="Dispensar" style="background:none;border:none;color:#92400e;cursor:pointer;font-size:1.1rem;line-height:1">
+      <button type="submit" title="Dispensar" class="notif-dismiss">
         <i class="ti ti-x"></i>
       </button>
     </form>

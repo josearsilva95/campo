@@ -6,7 +6,6 @@
   <title>{% block title %}Controle de Viagem{% endblock %}</title>
   <link rel="manifest" href="/static/manifest.json">
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon.png">
   <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192.png">
   <meta name="theme-color" content="#2563EB">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,23 +13,24 @@
   <meta name="apple-mobile-web-app-title" content="Campo">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
 
   <!-- Orbes de fundo -->
-  <div class="orb orb-blue"></div>
-  <div class="orb orb-cyan"></div>
+  <div class="hero-bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+  </div>
 
   <!-- Navbar -->
   {% if session.get('usuario_id') %}
   <nav class="navbar">
     <div class="navbar-inner">
       <a href="{{ url_for('adm.dashboard') if session.get('perfil') == 'adm' else url_for('tecnico.dashboard') }}" class="navbar-logo">
-        <i class="ti ti-steering-wheel"></i>
-        <span>Controle de Viagem</span>
+        <div class="nav-logo-icon"><i class="ti ti-steering-wheel"></i></div>
+        <div class="nav-logo-text"><span>Campo</span></div>
       </a>
 
       <div class="navbar-links">
@@ -59,9 +59,9 @@
 
       <div class="navbar-user">
         <div class="user-avatar">{{ session.get('nome', 'U')[0].upper() }}</div>
-        <div class="user-info">
-          <span class="user-name">{{ session.get('nome', '') }}</span>
-          <span class="user-role">{{ session.get('perfil', '').upper() }}</span>
+        <div>
+          <div class="user-name">{{ session.get('nome', '') }}</div>
+          <div class="user-role">{{ session.get('perfil', '').upper() }}</div>
         </div>
         <a href="{{ url_for('auth.logout') }}" class="btn-logout" title="Sair">
           <i class="ti ti-logout"></i>
@@ -86,7 +86,7 @@
   {% endwith %}
 
   <!-- Conteúdo principal -->
-  <main class="main-content {% if not session.get('usuario_id') %}no-nav{% endif %}">
+  <main class="main-content">
     {% block content %}{% endblock %}
   </main>
 

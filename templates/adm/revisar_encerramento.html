@@ -108,7 +108,7 @@
             <div class="form-group">
               <label>Valor Devolvido (R$)</label>
               <input type="number" name="saldo_devolvido" step="0.01" min="0"
-                     value="{{ viagem.saldo_disponivel|max(0) }}">
+                     value="{{ [viagem.saldo_disponivel, 0]|max }}">
             </div>
           </div>
 
@@ -125,7 +125,7 @@
             <div class="form-group">
               <label>Valor a Transferir (R$)</label>
               <input type="number" name="valor_transferir" step="0.01" min="0"
-                     value="{{ viagem.saldo_disponivel|max(0) }}">
+                     value="{{ [viagem.saldo_disponivel, 0]|max }}">
             </div>
           </div>
 

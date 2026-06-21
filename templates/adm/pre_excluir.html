@@ -13,11 +13,11 @@
 </div>
 
 <!-- Aviso -->
-<div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;gap:.75rem;align-items:flex-start">
-  <i class="ti ti-alert-triangle" style="color:#ef4444;font-size:1.4rem;margin-top:.1rem;flex-shrink:0"></i>
+<div class="alert" style="background:rgba(239,68,68,.06);border:2px solid rgba(239,68,68,.3);border-radius:12px;margin-bottom:18px">
+  <i class="ti ti-alert-triangle text-red" style="font-size:1.4rem;flex-shrink:0"></i>
   <div>
-    <div style="font-weight:700;color:#b91c1c;margin-bottom:.25rem">Esta ação não pode ser desfeita</div>
-    <div style="color:#7f1d1d;font-size:.9rem">Todos os gastos, horas, paradas e fotos serão excluídos permanentemente. Baixe os relatórios e fotos abaixo antes de confirmar.</div>
+    <div style="font-weight:700;color:#b91c1c;margin-bottom:4px">Esta ação não pode ser desfeita</div>
+    <div style="color:#7f1d1d;font-size:11px">Todos os gastos, horas, paradas e fotos serão excluídos permanentemente. Baixe os relatórios e fotos abaixo antes de confirmar.</div>
   </div>
 </div>
 
@@ -26,11 +26,11 @@
   <div class="card-header-simple">
     <h3><i class="ti ti-download"></i> Baixar Relatórios</h3>
   </div>
-  <div class="card-body" style="display:flex;gap:1rem;flex-wrap:wrap">
+  <div class="card-body btn-group">
     <a href="{{ url_for('relatorio.pdf_gastos', id=viagem.id) }}" target="_blank" class="btn btn-primary">
       <i class="ti ti-file-type-pdf"></i> Relatório de Gastos
     </a>
-    <a href="{{ url_for('relatorio.pdf_horas', id=viagem.id) }}" target="_blank" class="btn btn-primary" style="background:#7c3aed">
+    <a href="{{ url_for('relatorio.pdf_horas', id=viagem.id) }}" target="_blank" class="btn btn-purple">
       <i class="ti ti-file-type-pdf"></i> Relatório de Horas
     </a>
   </div>
@@ -43,19 +43,18 @@
     <h3><i class="ti ti-photo"></i> Fotos das Notas Fiscais ({{ fotos|length }})</h3>
   </div>
   <div class="card-body">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px">
       {% for g in fotos %}
-      <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#f8fafc">
+      <div class="card" style="border-radius:10px;overflow:hidden">
         <a href="{{ g.foto_url }}" target="_blank" download>
           <img src="{{ g.foto_url }}" alt="{{ g.descricao or g.categoria }}"
                style="width:100%;height:120px;object-fit:cover;display:block">
         </a>
-        <div style="padding:.4rem .5rem">
-          <div style="font-size:.75rem;font-weight:600;color:#2563eb">{{ g.categoria.upper() }}</div>
-          <div style="font-size:.8rem;color:#1e293b">R$ {{ "%.2f"|format(g.valor) }}</div>
-          <a href="{{ g.foto_url }}" target="_blank" download
-             style="font-size:.7rem;color:#64748b;text-decoration:underline">
-            <i class="ti ti-download" style="font-size:.7rem"></i> Baixar
+        <div style="padding:6px 8px">
+          <div class="gasto-cat">{{ g.categoria.upper() }}</div>
+          <div style="font-size:12px;font-weight:700">R$ {{ "%.2f"|format(g.valor) }}</div>
+          <a href="{{ g.foto_url }}" target="_blank" download class="btn btn-ghost btn-xs" style="width:100%;margin-top:5px;justify-content:center">
+            <i class="ti ti-download"></i> Baixar
           </a>
         </div>
       </div>
@@ -77,18 +76,18 @@
     <h3><i class="ti ti-receipt"></i> Resumo — {{ gastos|length }} gasto(s)</h3>
   </div>
   <div class="card-body">
-    <div style="display:flex;gap:2rem;flex-wrap:wrap">
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
       <div>
-        <div style="font-size:.8rem;color:#64748b">Total Gasto</div>
-        <div style="font-size:1.4rem;font-weight:700;color:#ef4444">R$ {{ "%.2f"|format(viagem.total_gastos) }}</div>
+        <div class="metric-label">Total Gasto</div>
+        <div class="metric-value text-red">R$ {{ "%.2f"|format(viagem.total_gastos) }}</div>
       </div>
       <div>
-        <div style="font-size:.8rem;color:#64748b">Caixa Inicial</div>
-        <div style="font-size:1.4rem;font-weight:700;color:#2563eb">R$ {{ "%.2f"|format(viagem.caixa_valor + (viagem.caixa_transferido or 0)) }}</div>
+        <div class="metric-label">Caixa Inicial</div>
+        <div class="metric-value text-blue">R$ {{ "%.2f"|format(viagem.caixa_valor + (viagem.caixa_transferido or 0)) }}</div>
       </div>
       <div>
-        <div style="font-size:.8rem;color:#64748b">Saldo Final</div>
-        <div style="font-size:1.4rem;font-weight:700;color:{% if viagem.saldo_disponivel >= 0 %}#10b981{% else %}#ef4444{% endif %}">
+        <div class="metric-label">Saldo Final</div>
+        <div class="metric-value {% if viagem.saldo_disponivel >= 0 %}text-green{% else %}text-red{% endif %}">
           R$ {{ "%.2f"|format(viagem.saldo_disponivel) }}
         </div>
       </div>
@@ -97,7 +96,7 @@
 </div>
 
 <!-- Botão confirmar exclusão -->
-<div style="display:flex;gap:1rem;justify-content:flex-end;padding-bottom:2rem">
+<div style="display:flex;gap:12px;justify-content:flex-end;padding-bottom:2rem">
   <a href="{{ url_for('adm.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost">
     Cancelar
   </a>
