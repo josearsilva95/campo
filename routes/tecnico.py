@@ -123,9 +123,14 @@ def lancar(id):
             ext = foto.filename.rsplit(".", 1)[-1].lower() if "." in foto.filename else "jpg"
             filename = f"{id}/{uuid.uuid4()}.{ext}"
             foto_url = upload_foto(foto.read(), filename)
+            if not foto_url:
+                flash("Gasto salvo, mas a foto não foi enviada. Verifique o bucket 'notas' no Supabase Storage.", "error")
 
         lancar_gasto(id, categoria, descricao, valor, foto_url)
-        flash("Gasto lançado com sucesso!", "success")
+        if foto_url:
+            flash("Gasto lançado com foto!", "success")
+        else:
+            flash("Gasto lançado com sucesso!", "success")
         return redirect(url_for("tecnico.viagem_detalhe", id=id))
 
     return render_template("tecnico/lancar_gasto.html", viagem=viagem, categorias=CATEGORIAS)
