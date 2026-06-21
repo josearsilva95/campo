@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Notas — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ viagem.obra }}</h1>
+    <p class="page-sub">{{ fotos|length }} nota{{ 's' if fotos|length != 1 else '' }} fiscal{{ 'is' if fotos|length != 1 else '' }}</p>
+  </div>
+  <div style="display:flex;gap:.5rem">
+    <a href="{{ url_for('adm.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+      <i class="ti ti-eye"></i> Ver Viagem
+    </a>
+    <a href="{{ url_for('adm.galeria_fotos') }}" class="btn btn-ghost btn-sm">
+      <i class="ti ti-arrow-left"></i> Voltar
+    </a>
+  </div>
+</div>
+
+{% if fotos %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">
+  {% for g in fotos %}
+  <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#f8fafc;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+    <a href="{{ g.foto_url }}" target="_blank">
+      <img src="{{ g.foto_url }}" alt="{{ g.descricao or g.categoria }}"
+           style="width:100%;height:140px;object-fit:cover;display:block">
+    </a>
+    <div style="padding:.5rem .6rem">
+      <div style="font-size:.7rem;font-weight:700;color:#2563eb;text-transform:uppercase">{{ g.categoria }}</div>
+      <div style="font-size:.9rem;font-weight:700;color:#1e293b">R$ {{ "%.2f"|format(g.valor) }}</div>
+      {% if g.descricao %}
+      <div style="font-size:.75rem;color:#64748b;margin:.1rem 0">{{ g.descricao }}</div>
+      {% endif %}
+      <div style="font-size:.7rem;color:#94a3b8">{{ g.created_at[:10] }}</div>
+      <a href="{{ g.foto_url }}" target="_blank" download
+         class="btn btn-ghost btn-xs" style="width:100%;text-align:center;margin-top:.4rem">
+        <i class="ti ti-download"></i> Baixar
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <i class="ti ti-photo-off"></i>
+  <p>Nenhuma foto nesta viagem.</p>
+</div>
+{% endif %}
+{% endblock %}

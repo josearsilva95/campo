@@ -55,12 +55,37 @@ def resumo_anual(ano: int):
     }
 
 
-def listar_todos_gastos_com_foto():
+def listar_viagens_com_fotos():
     res = (
         supabase.table("gastos")
-        .select("*, viagem:viagens(id, obra, status)")
+        .select("viagem_id, foto_url, viagem:viagens(id, obra, status, data_saida)")
         .not_.is_("foto_url", "null")
-        .order("created_at", desc=True)
+        .execute()
+    )
+    gastos = res.data or []
+    viagens: dict[str, dict] = {}
+    for g in gastos:
+        v = g.get("viagem") or {}
+        vid = v.get("id", g["viagem_id"])
+        if vid not in viagens:
+            viagens[vid] = {
+                "id": vid,
+                "obra": v.get("obra", "—"),
+                "status": v.get("status", ""),
+                "data_saida": v.get("data_saida", ""),
+                "total_fotos": 0,
+            }
+        viagens[vid]["total_fotos"] += 1
+    return sorted(viagens.values(), key=lambda x: x["data_saida"] or "", reverse=True)
+
+
+def listar_fotos_viagem(viagem_id: str):
+    res = (
+        supabase.table("gastos")
+        .select("*")
+        .eq("viagem_id", viagem_id)
+        .not_.is_("foto_url", "null")
+        .order("created_at")
         .execute()
     )
     return res.data or []

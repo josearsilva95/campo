@@ -1,44 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Galeria de Notas — Controle de Viagem{% endblock %}
+{% block title %}Notas Fiscais — Controle de Viagem{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div>
     <h1 class="page-title">Notas Fiscais</h1>
-    <p class="page-sub">Todas as fotos de comprovantes ({{ gastos|length }} foto{{ 's' if gastos|length != 1 else '' }})</p>
+    <p class="page-sub">Selecione uma viagem para ver os comprovantes</p>
   </div>
   <a href="{{ url_for('adm.dashboard') }}" class="btn btn-ghost btn-sm">
     <i class="ti ti-arrow-left"></i> Voltar
   </a>
 </div>
 
-{% if gastos %}
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">
-  {% for g in gastos %}
-  <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#f8fafc;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-    <a href="{{ g.foto_url }}" target="_blank">
-      <img src="{{ g.foto_url }}" alt="{{ g.descricao or g.categoria }}"
-           style="width:100%;height:130px;object-fit:cover;display:block">
-    </a>
-    <div style="padding:.5rem .6rem">
-      <div style="font-size:.7rem;font-weight:700;color:#2563eb;text-transform:uppercase">{{ g.categoria }}</div>
-      <div style="font-size:.85rem;font-weight:600;color:#1e293b">R$ {{ "%.2f"|format(g.valor) }}</div>
-      {% if g.descricao %}
-      <div style="font-size:.75rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.descricao }}</div>
-      {% endif %}
-      <div style="font-size:.7rem;color:#94a3b8;margin-top:.2rem">
-        {{ (g.viagem or {}).get('obra', '—') }}
+{% if viagens %}
+<div class="cards-grid">
+  {% for v in viagens %}
+  <a href="{{ url_for('adm.galeria_fotos_viagem', viagem_id=v.id) }}"
+     style="text-decoration:none;color:inherit">
+    <div class="card" style="cursor:pointer;transition:box-shadow .15s;hover:box-shadow 0 4px 16px rgba(0,0,0,.1)">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">{{ v.obra }}</h3>
+          <p class="card-meta"><i class="ti ti-calendar"></i> {{ v.data_saida or '—' }}</p>
+        </div>
+        <span class="badge badge-{% if v.status == 'ativa' %}green{% elif v.status == 'encerramento_pendente' %}amber{% else %}gray{% endif %}">
+          {{ v.status.replace('_',' ').upper() if v.status else '—' }}
+        </span>
       </div>
-      <div style="display:flex;gap:.5rem;margin-top:.4rem">
-        <a href="{{ g.foto_url }}" target="_blank" class="btn btn-ghost btn-xs" style="flex:1;text-align:center">
-          <i class="ti ti-eye"></i> Ver
-        </a>
-        <a href="{{ g.foto_url }}" download class="btn btn-ghost btn-xs" style="flex:1;text-align:center">
-          <i class="ti ti-download"></i>
-        </a>
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:.5rem;color:#64748b">
+          <i class="ti ti-photo" style="font-size:1.3rem;color:#2563eb"></i>
+          <span style="font-size:1.1rem;font-weight:700;color:#1e293b">{{ v.total_fotos }}</span>
+          <span style="font-size:.85rem">foto{{ 's' if v.total_fotos != 1 else '' }}</span>
+        </div>
+        <span style="color:#2563eb;font-size:.85rem;font-weight:600">
+          Ver notas <i class="ti ti-chevron-right"></i>
+        </span>
       </div>
     </div>
-  </div>
+  </a>
   {% endfor %}
 </div>
 {% else %}

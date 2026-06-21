@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 from models import viagem as vm
 from models import usuario as um
-from models.gasto import listar_gastos, gastos_por_categoria, listar_todos_gastos_com_foto, resumo_anual
+from models.gasto import listar_gastos, gastos_por_categoria, listar_viagens_com_fotos, listar_fotos_viagem, resumo_anual
 from models.parada import adicionar_parada, listar_paradas, marcar_notificado
 from models.checklist import buscar_checklist
 from models.notificacao import criar_notificacao
@@ -320,8 +320,19 @@ def relatorio_anual():
 @adm_bp.route("/fotos")
 @requer_adm
 def galeria_fotos():
-    gastos = listar_todos_gastos_com_foto()
-    return render_template("adm/galeria_fotos.html", gastos=gastos)
+    viagens = listar_viagens_com_fotos()
+    return render_template("adm/galeria_fotos.html", viagens=viagens)
+
+
+@adm_bp.route("/fotos/<viagem_id>")
+@requer_adm
+def galeria_fotos_viagem(viagem_id):
+    viagem = vm.buscar_viagem(viagem_id)
+    if not viagem:
+        flash("Viagem não encontrada.", "error")
+        return redirect(url_for("adm.galeria_fotos"))
+    fotos = listar_fotos_viagem(viagem_id)
+    return render_template("adm/galeria_fotos_viagem.html", viagem=viagem, fotos=fotos)
 
 
 # ── Pre-exclusão: download antes de apagar ───────────────────
