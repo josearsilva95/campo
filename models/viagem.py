@@ -179,6 +179,15 @@ def aprovar_encerramento(
     return res.data[0] if res.data else None
 
 
+def excluir_viagem(viagem_id: str):
+    supabase.table("gastos").delete().eq("viagem_id", viagem_id).execute()
+    supabase.table("registros_hora").delete().eq("viagem_id", viagem_id).execute()
+    supabase.table("paradas").delete().eq("viagem_id", viagem_id).execute()
+    supabase.table("checklist").delete().eq("viagem_id", viagem_id).execute()
+    supabase.table("tecnicos_viagem").delete().eq("viagem_id", viagem_id).execute()
+    supabase.table("viagens").delete().eq("id", viagem_id).execute()
+
+
 def listar_viagens_ativas_exceto(viagem_id: str):
     res = (
         supabase.table("viagens")

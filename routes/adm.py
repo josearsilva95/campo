@@ -279,6 +279,19 @@ def aprovar_encerramento(id):
     return redirect(url_for("adm.dashboard"))
 
 
+# ── Excluir viagem ───────────────────────────────────────────
+@adm_bp.route("/viagem/<id>/excluir", methods=["POST"])
+@requer_adm
+def excluir_viagem(id):
+    viagem = vm.buscar_viagem(id)
+    if not viagem:
+        flash("Viagem não encontrada.", "error")
+        return redirect(url_for("adm.dashboard"))
+    vm.excluir_viagem(id)
+    flash(f"Viagem '{viagem['obra']}' excluída com sucesso.", "success")
+    return redirect(url_for("adm.dashboard"))
+
+
 # ── Encerramento direto pelo ADM ─────────────────────────────
 @adm_bp.route("/viagem/<id>/encerrar", methods=["POST"])
 @requer_adm

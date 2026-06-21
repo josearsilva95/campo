@@ -86,6 +86,12 @@
       <a href="{{ url_for('adm.viagem_detalhe', id=v.id) }}" class="btn btn-ghost btn-sm">
         <i class="ti ti-info-circle"></i> Detalhes
       </a>
+      <form method="POST" action="{{ url_for('adm.excluir_viagem', id=v.id) }}" style="display:inline"
+            onsubmit="return confirm('Excluir viagem {{ v.obra }}? Todos os dados serão perdidos!')">
+        <button type="submit" class="btn btn-ghost btn-sm" style="color:#ef4444">
+          <i class="ti ti-trash"></i>
+        </button>
+      </form>
     </div>
   </div>
   {% endfor %}
@@ -139,6 +145,12 @@
       <a href="{{ url_for('relatorio.pdf_gastos', id=v.id) }}" class="btn btn-ghost btn-sm" target="_blank">
         <i class="ti ti-file-type-pdf"></i> PDF
       </a>
+      <form method="POST" action="{{ url_for('adm.excluir_viagem', id=v.id) }}" style="display:inline"
+            onsubmit="return confirm('Excluir viagem {{ v.obra }}? Todos os dados serão perdidos!')">
+        <button type="submit" class="btn btn-ghost btn-sm" style="color:#ef4444">
+          <i class="ti ti-trash"></i>
+        </button>
+      </form>
     </div>
   </div>
   {% endfor %}
@@ -179,6 +191,12 @@
         <td>
           <a href="{{ url_for('adm.viagem_detalhe', id=v.id) }}" class="btn btn-ghost btn-xs">Ver</a>
           <a href="{{ url_for('relatorio.pdf_gastos', id=v.id) }}" class="btn btn-ghost btn-xs" target="_blank">PDF</a>
+          <form method="POST" action="{{ url_for('adm.excluir_viagem', id=v.id) }}" style="display:inline"
+                onsubmit="return confirm('Excluir viagem {{ v.obra }}?')">
+            <button type="submit" class="btn btn-ghost btn-xs" style="color:#ef4444">
+              <i class="ti ti-trash"></i> Excluir
+            </button>
+          </form>
         </td>
       </tr>
       {% endfor %}
