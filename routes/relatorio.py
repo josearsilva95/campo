@@ -31,7 +31,7 @@ def pdf_gastos(id):
     equipe = vm.listar_tecnicos_viagem(id)
     paradas = listar_paradas(id)
 
-    html = render_template(
+    return render_template(
         "relatorios/gastos_pdf.html",
         viagem=viagem,
         gastos=gastos,
@@ -40,16 +40,6 @@ def pdf_gastos(id):
         paradas=paradas,
         now=datetime.now,
     )
-
-    try:
-        from weasyprint import HTML
-        pdf = HTML(string=html, base_url=request.base_url).write_pdf()
-        response = make_response(pdf)
-        response.headers["Content-Type"] = "application/pdf"
-        response.headers["Content-Disposition"] = f'attachment; filename="gastos_{id[:8]}.pdf"'
-        return response
-    except Exception as e:
-        return f"<pre>Erro ao gerar PDF: {e}\n\n{html}</pre>", 500
 
 
 @relatorio_bp.route("/viagem/<id>/horas")
@@ -64,7 +54,7 @@ def pdf_horas(id):
     resumo = resumo_horas_viagem(id)
     equipe = vm.listar_tecnicos_viagem(id)
 
-    html = render_template(
+    return render_template(
         "relatorios/horas_pdf.html",
         viagem=viagem,
         pontos=pontos,
@@ -72,13 +62,3 @@ def pdf_horas(id):
         equipe=equipe,
         now=datetime.now,
     )
-
-    try:
-        from weasyprint import HTML
-        pdf = HTML(string=html, base_url=request.base_url).write_pdf()
-        response = make_response(pdf)
-        response.headers["Content-Type"] = "application/pdf"
-        response.headers["Content-Disposition"] = f'attachment; filename="horas_{id[:8]}.pdf"'
-        return response
-    except Exception as e:
-        return f"<pre>Erro ao gerar PDF: {e}\n\n{html}</pre>", 500

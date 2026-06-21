@@ -28,9 +28,20 @@
   .assinatura-box { border-top: 1px solid #1e293b; padding-top: 8px; text-align: center; font-size: 9pt; color: #64748b; }
   .member-list { display: flex; gap: 12px; flex-wrap: wrap; }
   .member-chip { background: #f3e8ff; border-radius: 20px; padding: 3px 10px; font-size: 9pt; }
+  .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #7C3AED; padding: 8px 20px; display: flex; gap: 10px; align-items: center; z-index: 100; }
+  .print-bar button { background: #fff; color: #7C3AED; border: none; border-radius: 6px; padding: 6px 16px; font-size: 10pt; font-weight: 600; cursor: pointer; }
+  .print-bar span { color: #fff; font-size: 10pt; }
+  body { padding-top: 44px; }
+  @media print { .print-bar { display: none !important; } body { padding-top: 0; } }
 </style>
 </head>
 <body>
+
+<div class="print-bar">
+  <span>Relatório de Horas — {{ viagem.obra }}</span>
+  <button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  <button onclick="window.history.back()" style="background:#ede9fe">← Voltar</button>
+</div>
 
 <div class="header">
   <div>
