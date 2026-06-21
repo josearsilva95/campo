@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 from models import viagem as vm
 from models import usuario as um
-from models.gasto import listar_gastos, gastos_por_categoria
+from models.gasto import listar_gastos, gastos_por_categoria, listar_todos_gastos_com_foto
 from models.parada import adicionar_parada, listar_paradas, marcar_notificado
 from models.checklist import buscar_checklist
 from models.notificacao import criar_notificacao
@@ -293,6 +293,27 @@ def aprovar_encerramento(id):
 
     flash("Encerramento aprovado com sucesso!", "success")
     return redirect(url_for("adm.dashboard"))
+
+
+# ── Galeria de notas fiscais ─────────────────────────────────
+@adm_bp.route("/fotos")
+@requer_adm
+def galeria_fotos():
+    gastos = listar_todos_gastos_com_foto()
+    return render_template("adm/galeria_fotos.html", gastos=gastos)
+
+
+# ── Pre-exclusão: download antes de apagar ───────────────────
+@adm_bp.route("/viagem/<id>/pre-excluir")
+@requer_adm
+def pre_excluir_viagem(id):
+    viagem = vm.buscar_viagem(id)
+    if not viagem:
+        flash("Viagem não encontrada.", "error")
+        return redirect(url_for("adm.dashboard"))
+    gastos = listar_gastos(id)
+    fotos = [g for g in gastos if g.get("foto_url")]
+    return render_template("adm/pre_excluir.html", viagem=viagem, gastos=gastos, fotos=fotos)
 
 
 # ── Excluir viagem ───────────────────────────────────────────

@@ -87,7 +87,7 @@
         <i class="ti ti-info-circle"></i> Detalhes
       </a>
       <form method="POST" action="{{ url_for('adm.excluir_viagem', id=v.id) }}" style="display:inline"
-            onsubmit="return confirm('Excluir viagem {{ v.obra }}? Todos os dados serão perdidos!')">
+            onsubmit="return confirm('Excluir viagem? Certifique-se de ter baixado os relatórios!')">
         <button type="submit" class="btn btn-ghost btn-sm" style="color:#ef4444">
           <i class="ti ti-trash"></i>
         </button>
@@ -146,7 +146,7 @@
         <i class="ti ti-file-type-pdf"></i> PDF
       </a>
       <form method="POST" action="{{ url_for('adm.excluir_viagem', id=v.id) }}" style="display:inline"
-            onsubmit="return confirm('Excluir viagem {{ v.obra }}? Todos os dados serão perdidos!')">
+            onsubmit="return confirm('Excluir viagem? Certifique-se de ter baixado os relatórios!')">
         <button type="submit" class="btn btn-ghost btn-sm" style="color:#ef4444">
           <i class="ti ti-trash"></i>
         </button>

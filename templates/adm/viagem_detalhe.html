@@ -20,12 +20,9 @@
     <a href="{{ url_for('adm.dashboard') }}" class="btn btn-ghost btn-sm">
       <i class="ti ti-arrow-left"></i> Voltar
     </a>
-    <form method="POST" action="{{ url_for('adm.excluir_viagem', id=viagem.id) }}" style="display:inline"
-          onsubmit="return confirm('Tem certeza? Isso vai excluir a viagem e TODOS os gastos, horas e paradas. Essa ação não pode ser desfeita!')">
-      <button type="submit" class="btn btn-red btn-sm">
-        <i class="ti ti-trash"></i> Excluir Viagem
-      </button>
-    </form>
+    <a href="{{ url_for('adm.pre_excluir_viagem', id=viagem.id) }}" class="btn btn-red btn-sm">
+      <i class="ti ti-trash"></i> Excluir Viagem
+    </a>
   </div>
 </div>
 

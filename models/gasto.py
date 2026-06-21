@@ -7,6 +7,17 @@ BUCKET = "notas"
 MAX_PX = 1200
 
 
+def listar_todos_gastos_com_foto():
+    res = (
+        supabase.table("gastos")
+        .select("*, viagem:viagens(id, obra, status)")
+        .not_.is_("foto_url", "null")
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return res.data or []
+
+
 def listar_gastos(viagem_id: str):
     res = (
         supabase.table("gastos")
