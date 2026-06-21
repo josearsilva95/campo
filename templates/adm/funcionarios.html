@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Funcionários — Controle de Viagem{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Funcionários</h1>
+    <p class="page-sub">Gerencie a equipe</p>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <!-- Formulário novo funcionário -->
+  <div>
+    <div class="card">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-user-plus"></i> Novo Funcionário</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('adm.novo_funcionario') }}">
+          <div class="form-group">
+            <label>Nome Completo *</label>
+            <input type="text" name="nome" required placeholder="João da Silva">
+          </div>
+          <div class="form-group">
+            <label>E-mail *</label>
+            <input type="email" name="email" required placeholder="joao@empresa.com">
+          </div>
+          <div class="form-group">
+            <label>Senha *</label>
+            <input type="password" name="senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+          </div>
+          <div class="form-group">
+            <label>Telefone (WhatsApp)</label>
+            <input type="text" name="telefone" placeholder="5511999999999">
+          </div>
+          <div class="form-group">
+            <label>Perfil</label>
+            <select name="perfil">
+              <option value="tecnico">Técnico</option>
+              <option value="adm">Administrador</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="ti ti-plus"></i> Criar Funcionário
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de funcionários -->
+  <div>
+    <div class="card">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-users"></i> Todos os Funcionários ({{ funcionarios|length }})</h3>
+      </div>
+      <div class="card-body p-0">
+        {% for f in funcionarios %}
+        <div class="func-row {% if not f.ativo %}func-inativo{% endif %}">
+          <div class="func-avatar">{{ f.nome[0].upper() }}</div>
+          <div class="func-info">
+            <div class="func-nome">{{ f.nome }} {% if not f.ativo %}<span class="badge badge-gray">Inativo</span>{% endif %}</div>
+            <div class="func-meta">{{ f.email }} · <span class="badge badge-{% if f.perfil == 'adm' %}blue{% else %}gray{% endif %}">{{ f.perfil.upper() }}</span></div>
+            {% if f.telefone %}<div class="func-tel"><i class="ti ti-brand-whatsapp"></i> {{ f.telefone }}</div>{% endif %}
+          </div>
+          <div class="func-actions">
+            <!-- Modal / Inline edit (simplificado com formulários diretos) -->
+            <button class="btn btn-ghost btn-xs" onclick="toggleEdit('edit-{{ f.id }}')">
+              <i class="ti ti-edit"></i>
+            </button>
+            <button class="btn btn-ghost btn-xs" onclick="toggleEdit('pwd-{{ f.id }}')">
+              <i class="ti ti-key"></i>
+            </button>
+            {% if f.ativo %}
+            <form method="POST" action="{{ url_for('adm.excluir_funcionario', id=f.id) }}" style="display:inline"
+                  onsubmit="return confirm('Desativar {{ f.nome }}?')">
+              <button type="submit" class="btn btn-red btn-xs"><i class="ti ti-trash"></i></button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Form editar -->
+        <div id="edit-{{ f.id }}" class="func-edit-form hidden">
+          <form method="POST" action="{{ url_for('adm.editar_funcionario', id=f.id) }}">
+            <div class="grid-2">
+              <div class="form-group"><label>Nome</label><input type="text" name="nome" value="{{ f.nome }}"></div>
+              <div class="form-group"><label>E-mail</label><input type="email" name="email" value="{{ f.email }}"></div>
+              <div class="form-group"><label>Telefone</label><input type="text" name="telefone" value="{{ f.telefone or '' }}"></div>
+              <div class="form-group">
+                <label>Perfil</label>
+                <select name="perfil">
+                  <option value="tecnico" {% if f.perfil == 'tecnico' %}selected{% endif %}>Técnico</option>
+                  <option value="adm" {% if f.perfil == 'adm' %}selected{% endif %}>Administrador</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions-inline">
+              <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleEdit('edit-{{ f.id }}')">Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Form senha -->
+        <div id="pwd-{{ f.id }}" class="func-edit-form hidden">
+          <form method="POST" action="{{ url_for('adm.redefinir_senha', id=f.id) }}">
+            <div class="form-group">
+              <label>Nova Senha</label>
+              <input type="password" name="nova_senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="form-actions-inline">
+              <button type="submit" class="btn btn-primary btn-sm">Redefinir</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleEdit('pwd-{{ f.id }}')">Cancelar</button>
+            </div>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleEdit(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('hidden');
+}
+</script>
+{% endblock %}

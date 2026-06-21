@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Solicitar Encerramento — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Solicitar Encerramento</h1>
+    <p class="page-sub">{{ viagem.obra }}</p>
+  </div>
+  <a href="{{ url_for('tecnico.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<!-- Resumo financeiro -->
+<div class="card mb-4">
+  <div class="card-header-simple">
+    <h3><i class="ti ti-receipt"></i> Resumo de Gastos</h3>
+  </div>
+  <div class="card-body">
+    <div class="fin-summary">
+      <div class="fin-row">
+        <span>Caixa Inicial</span>
+        <span>R$ {{ "%.2f"|format(viagem.caixa_valor) }}</span>
+      </div>
+      {% if viagem.caixa_transferido %}
+      <div class="fin-row">
+        <span>Saldo Transferido</span>
+        <span>R$ {{ "%.2f"|format(viagem.caixa_transferido) }}</span>
+      </div>
+      {% endif %}
+      {% for cat, valor in por_categoria.items() %}
+      <div class="fin-row text-muted">
+        <span>{{ cat.upper() }}</span>
+        <span>R$ {{ "%.2f"|format(valor) }}</span>
+      </div>
+      {% endfor %}
+      <div class="fin-row fin-subtotal text-red">
+        <span>Total Gasto</span>
+        <span>R$ {{ "%.2f"|format(viagem.total_gastos) }}</span>
+      </div>
+      <div class="fin-row fin-total {% if viagem.saldo_disponivel >= 0 %}text-green{% else %}text-red{% endif %}">
+        <span>Saldo a Devolver</span>
+        <span>R$ {{ "%.2f"|format(viagem.saldo_disponivel) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulário de encerramento -->
+<div class="form-card">
+  <div class="alert alert-amber">
+    <i class="ti ti-alert-triangle"></i>
+    Ao solicitar o encerramento, o ADM será notificado para revisar e aprovar.
+    Certifique-se de que todos os gastos foram lançados.
+  </div>
+
+  <form method="POST" onsubmit="return confirm('Confirma a solicitação de encerramento?')">
+    <div class="form-group">
+      <label for="data_retorno_real">Data de Retorno *</label>
+      <input type="date" id="data_retorno_real" name="data_retorno_real" required>
+    </div>
+    <div class="form-actions">
+      <a href="{{ url_for('tecnico.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost">Cancelar</a>
+      <button type="submit" class="btn btn-amber">
+        <i class="ti ti-send"></i> Solicitar Encerramento
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

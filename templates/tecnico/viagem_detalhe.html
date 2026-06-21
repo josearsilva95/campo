@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{{ viagem.obra }} — Técnico{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ viagem.obra }}</h1>
+    <p class="page-sub">{{ viagem.carro }} · {{ viagem.placa }}</p>
+  </div>
+  <a href="{{ url_for('tecnico.dashboard') }}" class="btn btn-ghost btn-sm">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<!-- Saldo card (destaque mobile) -->
+<div class="saldo-hero">
+  <div class="saldo-hero-inner">
+    <div class="saldo-hero-title">Saldo Disponível</div>
+    <div class="saldo-hero-valor {% if viagem.saldo_disponivel >= 0 %}saldo-positivo{% else %}saldo-negativo{% endif %}">
+      R$ {{ "%.2f"|format(viagem.saldo_disponivel) }}
+    </div>
+    <div class="saldo-hero-detail">
+      Caixa: R$ {{ "%.2f"|format(viagem.caixa_valor + (viagem.caixa_transferido or 0)) }} —
+      Gasto: R$ {{ "%.2f"|format(viagem.total_gastos) }}
+    </div>
+    <span class="badge badge-{% if viagem.status == 'ativa' %}green{% elif viagem.status == 'encerramento_pendente' %}amber{% else %}gray{% endif %} mt-2">
+      {{ viagem.status.replace('_', ' ').upper() }}
+    </span>
+  </div>
+</div>
+
+<!-- Ações rápidas -->
+<div class="quick-actions">
+  {% if e_responsavel and viagem.status == 'ativa' %}
+  <a href="{{ url_for('tecnico.lancar', id=viagem.id) }}" class="quick-btn quick-btn-green">
+    <i class="ti ti-plus"></i><span>Lançar Gasto</span>
+  </a>
+  {% endif %}
+  <a href="{{ url_for('tecnico.ponto', id=viagem.id) }}" class="quick-btn quick-btn-blue">
+    <i class="ti ti-clock"></i><span>Registrar Ponto</span>
+  </a>
+  <a href="{{ url_for('tecnico.ponto_historico', id=viagem.id) }}" class="quick-btn quick-btn-purple">
+    <i class="ti ti-history"></i><span>Histórico</span>
+  </a>
+  {% if e_responsavel %}
+  <a href="{{ url_for('tecnico.checklist', id=viagem.id, tipo='saida') }}" class="quick-btn quick-btn-amber">
+    <i class="ti ti-checklist"></i><span>Checklist</span>
+  </a>
+  {% endif %}
+  {% if e_responsavel and viagem.status == 'ativa' %}
+  <a href="{{ url_for('tecnico.encerrar', id=viagem.id) }}" class="quick-btn quick-btn-red">
+    <i class="ti ti-lock"></i><span>Encerrar</span>
+  </a>
+  {% endif %}
+</div>
+
+<!-- Paradas -->
+{% if paradas %}
+<div class="card mb-4">
+  <div class="card-header-simple">
+    <h3><i class="ti ti-route"></i> Rota / Paradas</h3>
+  </div>
+  <div class="card-body">
+    {% for p in paradas %}
+    <div class="parada-row">
+      <div class="parada-icon"><i class="ti ti-map-pin"></i></div>
+      <div>
+        <div class="parada-local">{{ p.local }}</div>
+        <div class="parada-meta">{{ p.tipo.replace('_', ' ').upper() }}</div>
+        {% if p.instrucoes %}
+        <div class="parada-instrucoes" style="text-transform:none">{{ p.instrucoes }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Gastos -->
+<div class="card mb-4">
+  <div class="card-header-simple">
+    <h3><i class="ti ti-receipt"></i> Gastos ({{ gastos|length }})</h3>
+    {% if e_responsavel and viagem.status == 'ativa' %}
+    <a href="{{ url_for('tecnico.lancar', id=viagem.id) }}" class="btn btn-green btn-xs">
+      <i class="ti ti-plus"></i> Novo
+    </a>
+    {% endif %}
+  </div>
+  <div class="card-body p-0">
+    {% for g in gastos %}
+    <div class="gasto-row">
+      <div class="gasto-info">
+        <span class="gasto-cat">{{ g.categoria.upper() }}</span>
+        <span class="gasto-desc" style="text-transform:none">{{ g.descricao or '—' }}</span>
+        <span class="gasto-date">{{ g.created_at[:10] }}</span>
+      </div>
+      <div class="gasto-right">
+        <span class="gasto-valor">R$ {{ "%.2f"|format(g.valor) }}</span>
+        {% if g.foto_url %}
+        <a href="{{ g.foto_url }}" target="_blank" class="gasto-foto"><i class="ti ti-photo"></i></a>
+        {% endif %}
+        {% if e_responsavel and viagem.status == 'ativa' %}
+        <form method="POST" action="{{ url_for('tecnico.deletar_gasto_route', id=viagem.id, gasto_id=g.id) }}"
+              onsubmit="return confirm('Remover este gasto?')" style="display:inline">
+          <button type="submit" class="btn-icon-red" title="Remover"><i class="ti ti-trash"></i></button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <p class="text-muted text-center p-4">Nenhum gasto registrado.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Equipe -->
+<div class="card mb-4">
+  <div class="card-header-simple">
+    <h3><i class="ti ti-users"></i> Equipe</h3>
+  </div>
+  <div class="card-body">
+    {% for m in equipe %}
+    <div class="member-row">
+      <div class="member-avatar">{{ m.usuario.nome[0].upper() if m.usuario else '?' }}</div>
+      <div>
+        <div class="member-name">{{ m.usuario.nome if m.usuario else '—' }}</div>
+        <div class="member-role">{% if m.usuario_id == viagem.responsavel_id %}Responsável{% else %}Técnico{% endif %}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

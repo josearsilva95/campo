@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Editar Viagem — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Editar Viagem</h1>
+    <p class="page-sub">{{ viagem.obra }}</p>
+  </div>
+  <a href="{{ url_for('adm.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<div class="form-card">
+  <form method="POST" class="form-grid">
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-building-factory-2"></i> Dados da Obra</h3>
+      <div class="grid-2">
+        <div class="form-group form-col-2">
+          <label for="obra">Nome / Identificação da Obra *</label>
+          <input type="text" id="obra" name="obra" required value="{{ viagem.obra }}">
+        </div>
+        <div class="form-group">
+          <label for="data_saida">Data de Saída *</label>
+          <input type="date" id="data_saida" name="data_saida" required value="{{ viagem.data_saida }}">
+        </div>
+        <div class="form-group">
+          <label for="data_retorno_prevista">Retorno Previsto</label>
+          <input type="date" id="data_retorno_prevista" name="data_retorno_prevista" value="{{ viagem.data_retorno_prevista or '' }}">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-car"></i> Veículo</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="carro">Modelo do Veículo *</label>
+          <input type="text" id="carro" name="carro" required value="{{ viagem.carro }}">
+        </div>
+        <div class="form-group">
+          <label for="placa">Placa *</label>
+          <input type="text" id="placa" name="placa" required value="{{ viagem.placa }}" maxlength="8"
+                 oninput="this.value=this.value.toUpperCase()">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-users"></i> Equipe</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="responsavel_id">Responsável *</label>
+          <select id="responsavel_id" name="responsavel_id" required>
+            {% for t in tecnicos %}
+            <option value="{{ t.id }}" {% if t.id == viagem.responsavel_id %}selected{% endif %}>{{ t.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Membros da Equipe</label>
+          <div class="checkbox-list">
+            {% for t in tecnicos %}
+            <label class="checkbox-item">
+              <input type="checkbox" name="membros" value="{{ t.id }}"
+                     {% if t.id in membros_ids %}checked{% endif %}>
+              <span>{{ t.nome }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-currency-dollar"></i> Financeiro</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="caixa_valor">Valor do Caixa (R$) *</label>
+          <input type="number" id="caixa_valor" name="caixa_valor" required step="0.01" min="0" value="{{ viagem.caixa_valor }}">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-note"></i> Observações</h3>
+      <div class="form-group">
+        <textarea id="observacoes" name="observacoes" rows="3">{{ viagem.observacoes or '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('adm.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost">Cancelar</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="ti ti-check"></i> Salvar Alterações
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

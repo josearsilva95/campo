@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Lançar Gasto — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Lançar Gasto</h1>
+    <p class="page-sub">{{ viagem.obra }}</p>
+  </div>
+  <a href="{{ url_for('tecnico.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<!-- Saldo rápido -->
+<div class="saldo-mini">
+  <span>Saldo disponível:</span>
+  <strong class="{% if viagem.saldo_disponivel >= 0 %}text-green{% else %}text-red{% endif %}">
+    R$ {{ "%.2f"|format(viagem.saldo_disponivel) }}
+  </strong>
+</div>
+
+<div class="form-card">
+  <form method="POST" enctype="multipart/form-data" class="form-grid">
+    <div class="form-group">
+      <label for="categoria">Categoria *</label>
+      <div class="cat-selector">
+        {% set cats = [
+          ('combustivel', 'ti-gas-station', 'Combustível'),
+          ('pedagio', 'ti-road', 'Pedágio'),
+          ('alimentacao', 'ti-tools-kitchen-2', 'Alimentação'),
+          ('hospedagem', 'ti-bed', 'Hospedagem'),
+          ('material', 'ti-tool', 'Material'),
+          ('outros', 'ti-dots', 'Outros'),
+        ] %}
+        {% for val, icon, label in cats %}
+        <label class="cat-option">
+          <input type="radio" name="categoria" value="{{ val }}" {% if loop.first %}checked{% endif %}>
+          <div class="cat-option-inner">
+            <i class="ti {{ icon }}"></i>
+            <span>{{ label }}</span>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="valor">Valor (R$) *</label>
+      <div class="input-icon">
+        <i class="ti ti-currency-real"></i>
+        <input type="number" id="valor" name="valor" required step="0.01" min="0.01"
+               placeholder="0,00" class="input-large">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="descricao">Descrição / Observação</label>
+      <textarea id="descricao" name="descricao" rows="2"
+                placeholder="Descrição do gasto, para qual técnico, etc."
+                style="text-transform:none"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="foto">Foto da Nota Fiscal</label>
+      <div class="file-upload-area" id="upload-area">
+        <input type="file" id="foto" name="foto" accept="image/*" capture="environment"
+               onchange="previewFoto(this)">
+        <div class="file-upload-placeholder" id="upload-placeholder">
+          <i class="ti ti-camera"></i>
+          <span>Tirar foto ou selecionar arquivo</span>
+        </div>
+        <img id="foto-preview" class="hidden" alt="Preview">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('tecnico.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost">Cancelar</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="ti ti-check"></i> Lançar Gasto
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewFoto(input) {
+  const preview = document.getElementById('foto-preview');
+  const placeholder = document.getElementById('upload-placeholder');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

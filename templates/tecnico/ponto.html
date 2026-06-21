@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Ponto — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Registro de Ponto</h1>
+    <p class="page-sub">{{ viagem.obra }} · {{ hoje }}</p>
+  </div>
+  <div class="btn-group">
+    <a href="{{ url_for('tecnico.ponto_historico', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+      <i class="ti ti-history"></i> Histórico
+    </a>
+    <a href="{{ url_for('tecnico.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+      <i class="ti ti-arrow-left"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<div class="ponto-card">
+  <div class="ponto-grid">
+    {% set registros = [
+      ('saida_hotel', 'ti-door-exit', 'Saída do Hotel', 'text-amber'),
+      ('chegada_obra', 'ti-building-factory-2', 'Chegada na Obra', 'text-blue'),
+      ('saida_obra', 'ti-building-off', 'Saída da Obra', 'text-purple'),
+      ('chegada_hotel', 'ti-door-enter', 'Chegada ao Hotel', 'text-green'),
+    ] %}
+
+    {% for campo, icon, label, color in registros %}
+    <div class="ponto-item {% if ponto and ponto.get(campo) %}ponto-ok{% endif %}">
+      <div class="ponto-icon {{ color }}">
+        <i class="ti {{ icon }}"></i>
+      </div>
+      <div class="ponto-info">
+        <div class="ponto-label">{{ label }}</div>
+        {% if ponto and ponto.get(campo) %}
+        <div class="ponto-hora">{{ ponto.get(campo)[:5] }}</div>
+        {% else %}
+        <form method="POST" class="ponto-form">
+          <input type="hidden" name="campo" value="{{ campo }}">
+          <div class="ponto-input-row">
+            <input type="time" name="hora" required>
+            <button type="submit" class="btn btn-primary btn-xs">OK</button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if ponto and ponto.total_horas %}
+  <div class="ponto-total">
+    <div class="ponto-total-label">Total de Horas Hoje</div>
+    <div class="ponto-total-valor">{{ ponto.total_horas }}h</div>
+    {% if ponto.total_horas > 8 %}
+    <div class="ponto-extras text-amber">
+      <i class="ti ti-clock-plus"></i> {{ "%.2f"|format(ponto.total_horas - 8) }}h extras
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

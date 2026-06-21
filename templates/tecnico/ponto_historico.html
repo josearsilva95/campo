@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Histórico de Ponto — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Histórico de Ponto</h1>
+    <p class="page-sub">{{ viagem.obra }}</p>
+  </div>
+  <a href="{{ url_for('tecnico.ponto', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header-simple">
+    <h3><i class="ti ti-clock"></i> Registros de Ponto</h3>
+    <span class="badge badge-blue">Total: {{ "%.2f"|format(total) }}h</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Técnico</th>
+          <th>Data</th>
+          <th>Saída Hotel</th>
+          <th>Chegada Obra</th>
+          <th>Saída Obra</th>
+          <th>Chegada Hotel</th>
+          <th>Total</th>
+          <th>Extras</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pontos %}
+        <tr>
+          <td>{{ (p.usuario or {}).nome or '—' }}</td>
+          <td>{{ p.data }}</td>
+          <td>{{ p.saida_hotel[:5] if p.saida_hotel else '—' }}</td>
+          <td>{{ p.chegada_obra[:5] if p.chegada_obra else '—' }}</td>
+          <td>{{ p.saida_obra[:5] if p.saida_obra else '—' }}</td>
+          <td>{{ p.chegada_hotel[:5] if p.chegada_hotel else '—' }}</td>
+          <td>
+            {% if p.total_horas %}
+            <span class="{% if p.total_horas > 8 %}text-amber{% else %}text-green{% endif %}">
+              {{ p.total_horas }}h
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if p.total_horas and p.total_horas > 8 %}
+            <span class="text-amber">{{ "%.2f"|format(p.total_horas - 8) }}h</span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted">Nenhum ponto registrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

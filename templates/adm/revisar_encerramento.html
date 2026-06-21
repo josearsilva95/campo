@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Revisar Encerramento — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Revisar Encerramento</h1>
+    <p class="page-sub">{{ viagem.obra }} — Solicitado pelo responsável</p>
+  </div>
+  <a href="{{ url_for('adm.dashboard') }}" class="btn btn-ghost">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<div class="detail-grid">
+  <!-- Resumo financeiro -->
+  <div>
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-currency-dollar"></i> Resumo Financeiro</h3>
+      </div>
+      <div class="card-body">
+        <div class="fin-summary">
+          <div class="fin-row">
+            <span>Caixa Inicial</span>
+            <span>R$ {{ "%.2f"|format(viagem.caixa_valor) }}</span>
+          </div>
+          {% if viagem.caixa_transferido %}
+          <div class="fin-row">
+            <span>Saldo Transferido</span>
+            <span>R$ {{ "%.2f"|format(viagem.caixa_transferido) }}</span>
+          </div>
+          {% endif %}
+          <div class="fin-row text-red">
+            <span>Total Gasto</span>
+            <span>R$ {{ "%.2f"|format(viagem.total_gastos) }}</span>
+          </div>
+          <div class="fin-row fin-total {% if viagem.saldo_disponivel >= 0 %}text-green{% else %}text-red{% endif %}">
+            <span>Saldo a Devolver</span>
+            <span>R$ {{ "%.2f"|format(viagem.saldo_disponivel) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gastos por categoria -->
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-chart-bar"></i> Por Categoria</h3>
+      </div>
+      <div class="card-body">
+        {% for cat, valor in por_categoria.items() %}
+        <div class="cat-row">
+          <span class="cat-name">{{ cat.upper() }}</span>
+          <span class="cat-value">R$ {{ "%.2f"|format(valor) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Equipe -->
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-users"></i> Equipe</h3>
+      </div>
+      <div class="card-body">
+        {% for m in equipe %}
+        <div class="member-row">
+          <div class="member-avatar">{{ m.usuario.nome[0].upper() if m.usuario else '?' }}</div>
+          <div>
+            <div class="member-name">{{ m.usuario.nome if m.usuario else '—' }}</div>
+            <div class="member-role">{% if m.usuario_id == viagem.responsavel_id %}Responsável{% else %}Técnico{% endif %}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulário de aprovação -->
+  <div>
+    <div class="card">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-circle-check"></i> Aprovar Encerramento</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('adm.aprovar_encerramento', id=viagem.id) }}">
+          <div class="form-group">
+            <label>Data de Retorno Real *</label>
+            <input type="date" name="data_retorno_real" required value="{{ viagem.data_retorno_real or '' }}">
+          </div>
+
+          <div class="form-group">
+            <label>Destino do Saldo</label>
+            <div class="radio-group">
+              <label class="radio-item">
+                <input type="radio" name="acao" value="devolver" checked onchange="toggleSaldoOpcao(this.value)">
+                <span>Devolução em espécie</span>
+              </label>
+              <label class="radio-item">
+                <input type="radio" name="acao" value="transferir" onchange="toggleSaldoOpcao(this.value)">
+                <span>Transferir para outra viagem</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="opcao-devolver">
+            <div class="form-group">
+              <label>Valor Devolvido (R$)</label>
+              <input type="number" name="saldo_devolvido" step="0.01" min="0"
+                     value="{{ viagem.saldo_disponivel|max(0) }}">
+            </div>
+          </div>
+
+          <div id="opcao-transferir" class="hidden">
+            <div class="form-group">
+              <label>Viagem Destino</label>
+              <select name="viagem_destino_id">
+                <option value="">Selecione...</option>
+                {% for va in viagens_ativas %}
+                <option value="{{ va.id }}">{{ va.obra }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Valor a Transferir (R$)</label>
+              <input type="number" name="valor_transferir" step="0.01" min="0"
+                     value="{{ viagem.saldo_disponivel|max(0) }}">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <a href="{{ url_for('adm.dashboard') }}" class="btn btn-ghost">Cancelar</a>
+            <button type="submit" class="btn btn-green">
+              <i class="ti ti-check"></i> Aprovar Encerramento
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de gastos para revisão -->
+    <div class="card mt-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-receipt"></i> Gastos para Revisão</h3>
+      </div>
+      <div class="card-body p-0">
+        {% for g in gastos %}
+        <div class="gasto-row">
+          <div class="gasto-info">
+            <span class="gasto-cat">{{ g.categoria.upper() }}</span>
+            <span class="gasto-desc" style="text-transform:none">{{ g.descricao or '—' }}</span>
+            <span class="gasto-date">{{ g.created_at[:10] }}</span>
+          </div>
+          <div class="gasto-right">
+            <span class="gasto-valor">R$ {{ "%.2f"|format(g.valor) }}</span>
+            {% if g.foto_url %}
+            <a href="{{ g.foto_url }}" target="_blank" class="gasto-foto" title="Ver nota">
+              <i class="ti ti-photo"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <p class="text-muted text-center p-4">Nenhum gasto.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleSaldoOpcao(valor) {
+  document.getElementById('opcao-devolver').classList.toggle('hidden', valor !== 'devolver');
+  document.getElementById('opcao-transferir').classList.toggle('hidden', valor !== 'transferir');
+}
+</script>
+{% endblock %}

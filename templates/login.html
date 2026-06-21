@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Login — Controle de Viagem{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-logo">
+      <i class="ti ti-steering-wheel"></i>
+    </div>
+    <h1 class="login-title">Controle de Viagem</h1>
+    <p class="login-sub">Acesse sua conta</p>
+
+    <form method="POST" class="login-form">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <div class="input-icon">
+          <i class="ti ti-mail"></i>
+          <input type="email" id="email" name="email" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <div class="input-icon">
+          <i class="ti ti-lock"></i>
+          <input type="password" id="senha" name="senha" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        <i class="ti ti-login"></i> Entrar
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

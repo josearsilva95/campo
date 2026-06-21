@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; font-size: 10pt; color: #1e293b; background: #fff; }
+  .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0 16px; border-bottom: 2px solid #7C3AED; margin-bottom: 20px; }
+  .header h1 { font-size: 18pt; color: #7C3AED; font-weight: 700; }
+  .header .meta { text-align: right; font-size: 8pt; color: #64748b; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-size: 10pt; font-weight: 700; color: #7C3AED; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px; }
+  .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px; }
+  .info-item { display: flex; gap: 6px; }
+  .info-label { font-weight: 600; color: #64748b; min-width: 120px; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  thead th { background: #7C3AED; color: #fff; padding: 6px 6px; text-align: center; font-weight: 600; text-transform: uppercase; font-size: 8pt; }
+  tbody td { padding: 5px 6px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+  tbody tr:nth-child(even) td { background: #faf5ff; }
+  .total-row td { font-weight: 700; background: #f3e8ff !important; border-top: 2px solid #7C3AED; }
+  .text-amber { color: #d97706; }
+  .text-green { color: #10b981; }
+  .resumo-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  .resumo-table th { background: #f3e8ff; color: #7C3AED; padding: 6px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #7C3AED; }
+  .resumo-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
+  .assinaturas { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 40px; }
+  .assinatura-box { border-top: 1px solid #1e293b; padding-top: 8px; text-align: center; font-size: 9pt; color: #64748b; }
+  .member-list { display: flex; gap: 12px; flex-wrap: wrap; }
+  .member-chip { background: #f3e8ff; border-radius: 20px; padding: 3px 10px; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Controle de Viagem</h1>
+    <div style="color:#64748b;font-size:9pt">Relatório de Horas — RH</div>
+  </div>
+  <div class="meta">
+    <div><strong>Nº</strong> {{ viagem.id[:8].upper() }}</div>
+    <div>Gerado em: {{ now().strftime('%d/%m/%Y %H:%M') if now is defined else '' }}</div>
+  </div>
+</div>
+
+<!-- Dados -->
+<div class="section">
+  <div class="section-title">Dados da Viagem</div>
+  <div class="info-grid">
+    <div class="info-item"><span class="info-label">Obra:</span><span>{{ viagem.obra }}</span></div>
+    <div class="info-item"><span class="info-label">Veículo:</span><span>{{ viagem.carro }} · {{ viagem.placa }}</span></div>
+    <div class="info-item"><span class="info-label">Responsável:</span><span>{{ (viagem.responsavel or {}).nome or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Período:</span><span>{{ viagem.data_saida }} → {{ viagem.data_retorno_real or viagem.data_retorno_prevista or '—' }}</span></div>
+  </div>
+</div>
+
+<!-- Equipe -->
+<div class="section">
+  <div class="section-title">Equipe</div>
+  <div class="member-list">
+    {% for m in equipe %}
+    <span class="member-chip">{{ m.usuario.nome if m.usuario else '—' }}</span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Tabela de pontos por funcionário e dia -->
+<div class="section">
+  <div class="section-title">Registro de Ponto Detalhado</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Técnico</th>
+        <th>Data</th>
+        <th>Saída Hotel</th>
+        <th>Chegada Obra</th>
+        <th>Saída Obra</th>
+        <th>Chegada Hotel</th>
+        <th>Total</th>
+        <th>Extras</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in pontos %}
+      <tr>
+        <td style="text-align:left">{{ (p.usuario or {}).nome or '—' }}</td>
+        <td>{{ p.data }}</td>
+        <td>{{ p.saida_hotel[:5] if p.saida_hotel else '—' }}</td>
+        <td>{{ p.chegada_obra[:5] if p.chegada_obra else '—' }}</td>
+        <td>{{ p.saida_obra[:5] if p.saida_obra else '—' }}</td>
+        <td>{{ p.chegada_hotel[:5] if p.chegada_hotel else '—' }}</td>
+        <td>
+          {% if p.total_horas %}
+          <span class="{% if p.total_horas > 8 %}text-amber{% else %}text-green{% endif %}">{{ p.total_horas }}h</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if p.total_horas and p.total_horas > 8 %}
+          <span class="text-amber">{{ "%.2f"|format(p.total_horas - 8) }}h</span>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8">Nenhum ponto registrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Resumo por funcionário -->
+<div class="section">
+  <div class="section-title">Resumo por Funcionário</div>
+  <table class="resumo-table">
+    <thead>
+      <tr>
+        <th>Técnico</th>
+        <th>Dias Trabalhados</th>
+        <th>Total de Horas</th>
+        <th>Horas Extras</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in resumo %}
+      <tr>
+        <td>{{ r.nome }}</td>
+        <td>{{ r.dias }}</td>
+        <td>{{ r.total_horas }}h</td>
+        <td class="{% if r.horas_extras > 0 %}text-amber{% endif %}">
+          {{ r.horas_extras }}h {% if r.horas_extras <= 0 %}(nenhuma){% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Assinaturas -->
+<div class="assinaturas">
+  <div class="assinatura-box">
+    <div>{{ (viagem.responsavel or {}).nome or 'Responsável' }}</div>
+    <div>Responsável pela Viagem</div>
+  </div>
+  <div class="assinatura-box">
+    <div>Recursos Humanos</div>
+    <div>Conferido e aprovado por</div>
+  </div>
+</div>
+
+</body>
+</html>

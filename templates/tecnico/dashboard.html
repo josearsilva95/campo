@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Minhas Viagens — Controle de Viagem{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Minhas Viagens</h1>
+    <p class="page-sub">Olá, {{ session.get('nome') }}!</p>
+  </div>
+</div>
+
+{% if viagens %}
+<div class="mobile-cards">
+  {% for v in viagens %}
+  <div class="mobile-card">
+    <div class="mobile-card-header">
+      <div class="mobile-card-title">{{ v.obra }}</div>
+      <span class="badge badge-{% if v.status == 'ativa' %}green{% elif v.status == 'encerramento_pendente' %}amber{% else %}gray{% endif %}">
+        {{ v.status.replace('_', ' ').upper() }}
+      </span>
+    </div>
+
+    <div class="mobile-card-saldo">
+      <div class="saldo-label">Saldo Disponível</div>
+      <div class="saldo-valor {% if v.saldo_disponivel >= 0 %}saldo-positivo{% else %}saldo-negativo{% endif %}">
+        R$ {{ "%.2f"|format(v.saldo_disponivel) }}
+      </div>
+    </div>
+
+    <div class="mobile-card-info">
+      <div class="mobile-info-item">
+        <i class="ti ti-car"></i>
+        <span>{{ v.carro }} · {{ v.placa }}</span>
+      </div>
+      <div class="mobile-info-item">
+        <i class="ti ti-user"></i>
+        <span>Resp: {{ (v.responsavel or {}).nome or '—' }}</span>
+      </div>
+      <div class="mobile-info-item">
+        <i class="ti ti-calendar"></i>
+        <span>Saída: {{ v.data_saida }}</span>
+      </div>
+      <div class="mobile-info-item">
+        <i class="ti ti-receipt"></i>
+        <span>Gasto: R$ {{ "%.2f"|format(v.total_gastos) }}</span>
+      </div>
+    </div>
+
+    <div class="mobile-card-actions">
+      <a href="{{ url_for('tecnico.viagem_detalhe', id=v.id) }}" class="btn btn-primary btn-sm">
+        <i class="ti ti-eye"></i> Ver Viagem
+      </a>
+      {% if session.get('usuario_id') == v.responsavel_id and v.status == 'ativa' %}
+      <a href="{{ url_for('tecnico.lancar', id=v.id) }}" class="btn btn-green btn-sm">
+        <i class="ti ti-plus"></i> Lançar Gasto
+      </a>
+      {% endif %}
+      <a href="{{ url_for('tecnico.ponto', id=v.id) }}" class="btn btn-ghost btn-sm">
+        <i class="ti ti-clock"></i> Ponto
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <i class="ti ti-map-off"></i>
+  <p>Você não possui viagens ativas no momento.</p>
+  <p class="text-muted">Aguarde ser escalado pelo administrador.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Checklist de {{ tipo|capitalize }} — {{ viagem.obra }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Checklist de {{ tipo|upper }}</h1>
+    <p class="page-sub">{{ viagem.obra }}</p>
+  </div>
+  <a href="{{ url_for('tecnico.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<div class="form-card">
+  <form method="POST" class="form-grid">
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-car"></i> Condições do Veículo</h3>
+      <div class="checklist-grid">
+        {% set labels = {
+          'pneus': ('ti-circle-dot', 'Pneus'),
+          'combustivel': ('ti-gas-station', 'Combustível'),
+          'oleo': ('ti-droplet', 'Óleo'),
+          'agua': ('ti-droplet-half-2', 'Água'),
+          'lanternas': ('ti-bulb', 'Lanternas/Faróis'),
+          'macaco': ('ti-tool', 'Macaco e Chave'),
+          'extintor': ('ti-fire-extinguisher', 'Extintor'),
+          'documentos': ('ti-file-certificate', 'Documentos'),
+        } %}
+        {% for campo in campos_bool %}
+        {% set icon, label = labels.get(campo, ('ti-check', campo)) %}
+        <label class="checklist-item {% if checklist and checklist.get(campo) %}checked{% endif %}">
+          <input type="checkbox" name="{{ campo }}" {% if checklist and checklist.get(campo) %}checked{% endif %}>
+          <i class="ti {{ icon }}"></i>
+          <span>{{ label }}</span>
+          <i class="ti ti-check checklist-check-icon"></i>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-dashboard"></i> Quilometragem</h3>
+      <div class="form-group">
+        <label for="km">KM Atual</label>
+        <input type="number" id="km" name="km" min="0"
+               value="{{ checklist.km if checklist and checklist.km else '' }}"
+               placeholder="Ex: 45823">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title"><i class="ti ti-note"></i> Observações</h3>
+      <div class="form-group">
+        <textarea name="observacoes" rows="3"
+                  placeholder="Observações sobre o veículo..."
+                  style="text-transform:none">{{ checklist.observacoes if checklist and checklist.observacoes else '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('tecnico.viagem_detalhe', id=viagem.id) }}" class="btn btn-ghost">Cancelar</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="ti ti-check"></i> Salvar Checklist
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

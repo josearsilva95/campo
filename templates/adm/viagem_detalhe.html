@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}{{ viagem.obra }} — Controle de Viagem{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ viagem.obra }}</h1>
+    <p class="page-sub">{{ viagem.carro }} · {{ viagem.placa }} — <span class="badge badge-{% if viagem.status == 'ativa' %}green{% elif viagem.status == 'encerramento_pendente' %}amber{% else %}gray{% endif %}">{{ viagem.status.replace('_', ' ').upper() }}</span></p>
+  </div>
+  <div class="btn-group">
+    <a href="{{ url_for('adm.editar_viagem', id=viagem.id) }}" class="btn btn-ghost btn-sm">
+      <i class="ti ti-edit"></i> Editar
+    </a>
+    <a href="{{ url_for('relatorio.pdf_gastos', id=viagem.id) }}" class="btn btn-ghost btn-sm" target="_blank">
+      <i class="ti ti-file-type-pdf"></i> PDF Gastos
+    </a>
+    <a href="{{ url_for('relatorio.pdf_horas', id=viagem.id) }}" class="btn btn-ghost btn-sm" target="_blank">
+      <i class="ti ti-file-type-pdf"></i> PDF Horas
+    </a>
+    <a href="{{ url_for('adm.dashboard') }}" class="btn btn-ghost btn-sm">
+      <i class="ti ti-arrow-left"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<!-- Cards de resumo -->
+<div class="stats-grid">
+  <div class="stat-card stat-blue">
+    <div class="stat-icon"><i class="ti ti-wallet"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">R$ {{ "%.2f"|format(viagem.caixa_valor + (viagem.caixa_transferido or 0)) }}</span>
+      <span class="stat-label">Caixa Total</span>
+    </div>
+  </div>
+  <div class="stat-card stat-red">
+    <div class="stat-icon"><i class="ti ti-receipt"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">R$ {{ "%.2f"|format(viagem.total_gastos) }}</span>
+      <span class="stat-label">Total Gasto</span>
+    </div>
+  </div>
+  <div class="stat-card {% if viagem.saldo_disponivel >= 0 %}stat-green{% else %}stat-red{% endif %}">
+    <div class="stat-icon"><i class="ti ti-currency-dollar"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">R$ {{ "%.2f"|format(viagem.saldo_disponivel) }}</span>
+      <span class="stat-label">Saldo Disponível</span>
+    </div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-icon"><i class="ti ti-users"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">{{ equipe|length }}</span>
+      <span class="stat-label">Técnicos</span>
+    </div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <!-- Coluna Esquerda -->
+  <div>
+    <!-- Informações gerais -->
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-info-circle"></i> Informações</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-table">
+          <div class="info-row-detail">
+            <span class="info-label">Responsável</span>
+            <span>{{ (viagem.responsavel or {}).nome or '—' }}</span>
+          </div>
+          <div class="info-row-detail">
+            <span class="info-label">Data Saída</span>
+            <span>{{ viagem.data_saida }}</span>
+          </div>
+          <div class="info-row-detail">
+            <span class="info-label">Retorno Previsto</span>
+            <span>{{ viagem.data_retorno_prevista or '—' }}</span>
+          </div>
+          <div class="info-row-detail">
+            <span class="info-label">Retorno Real</span>
+            <span>{{ viagem.data_retorno_real or '—' }}</span>
+          </div>
+          {% if viagem.observacoes %}
+          <div class="info-row-detail">
+            <span class="info-label">Observações</span>
+            <span style="text-transform:none">{{ viagem.observacoes }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Equipe -->
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-users"></i> Equipe</h3>
+      </div>
+      <div class="card-body">
+        {% for m in equipe %}
+        <div class="member-row">
+          <div class="member-avatar">{{ m.usuario.nome[0].upper() if m.usuario else '?' }}</div>
+          <div>
+            <div class="member-name">{{ m.usuario.nome if m.usuario else '—' }}</div>
+            <div class="member-role">{% if m.usuario_id == viagem.responsavel_id %}Responsável{% else %}Técnico{% endif %}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Paradas -->
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-route"></i> Paradas / Desvios</h3>
+      </div>
+      <div class="card-body">
+        {% for p in paradas %}
+        <div class="parada-row">
+          <div class="parada-icon"><i class="ti ti-map-pin"></i></div>
+          <div>
+            <div class="parada-local">{{ p.local }}</div>
+            <div class="parada-meta">{{ p.tipo.replace('_', ' ').upper() }} · {{ p.created_at[:10] }}</div>
+            {% if p.instrucoes %}
+            <div class="parada-instrucoes" style="text-transform:none">{{ p.instrucoes }}</div>
+            {% endif %}
+          </div>
+          <span class="badge badge-{% if p.notificado %}green{% else %}gray{% endif %} badge-xs">
+            {% if p.notificado %}Notificado{% else %}Pendente{% endif %}
+          </span>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">Nenhuma parada registrada.</p>
+        {% endfor %}
+
+        {% if viagem.status == 'ativa' %}
+        <div class="divider"></div>
+        <form method="POST" action="{{ url_for('adm.add_parada', id=viagem.id) }}">
+          <h4 class="form-mini-title">Adicionar Parada</h4>
+          <div class="form-group">
+            <input type="text" name="local" placeholder="Local da parada" required>
+          </div>
+          <div class="form-group">
+            <select name="tipo">
+              <option value="material">Material</option>
+              <option value="documento">Documento</option>
+              <option value="nova_obra">Nova Obra</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <textarea name="instrucoes" placeholder="Instruções (opcional)" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm btn-block">
+            <i class="ti ti-plus"></i> Adicionar Parada
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna Direita -->
+  <div>
+    <!-- Gastos por categoria -->
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-chart-bar"></i> Gastos por Categoria</h3>
+      </div>
+      <div class="card-body">
+        {% set cat_icons = {'combustivel': 'ti-gas-station', 'pedagio': 'ti-road', 'alimentacao': 'ti-tools-kitchen-2', 'hospedagem': 'ti-bed', 'material': 'ti-tool', 'outros': 'ti-dots'} %}
+        {% for cat, valor in por_categoria.items() %}
+        <div class="cat-row">
+          <span class="cat-icon"><i class="ti {{ cat_icons.get(cat, 'ti-dots') }}"></i></span>
+          <span class="cat-name">{{ cat.upper() }}</span>
+          <div class="cat-bar-wrapper">
+            <div class="cat-bar" style="width:{{ [(valor / viagem.total_gastos * 100) if viagem.total_gastos > 0 else 0, 100]|min }}%"></div>
+          </div>
+          <span class="cat-value">R$ {{ "%.2f"|format(valor) }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">Sem gastos registrados.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Lista de gastos -->
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-receipt"></i> Gastos ({{ gastos|length }})</h3>
+      </div>
+      <div class="card-body p-0">
+        {% for g in gastos %}
+        <div class="gasto-row">
+          <div class="gasto-info">
+            <span class="gasto-cat">{{ g.categoria.upper() }}</span>
+            <span class="gasto-desc" style="text-transform:none">{{ g.descricao or '—' }}</span>
+            <span class="gasto-date">{{ g.created_at[:10] }}</span>
+          </div>
+          <div class="gasto-right">
+            <span class="gasto-valor">R$ {{ "%.2f"|format(g.valor) }}</span>
+            {% if g.foto_url %}
+            <a href="{{ g.foto_url }}" target="_blank" class="gasto-foto" title="Ver nota fiscal">
+              <i class="ti ti-photo"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <p class="text-muted text-center p-4">Nenhum gasto registrado.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Encerrar viagem (ADM direto) -->
+    {% if viagem.status == 'ativa' %}
+    <div class="card mb-4 card-danger">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-lock"></i> Encerrar Viagem (ADM)</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('adm.encerrar_direto', id=viagem.id) }}"
+              onsubmit="return confirm('Confirma encerramento direto desta viagem?')">
+          <div class="form-group">
+            <label>Data de Retorno Real</label>
+            <input type="date" name="data_retorno_real" required>
+          </div>
+          <div class="form-group">
+            <label>Saldo Devolvido (R$)</label>
+            <input type="number" name="saldo_devolvido" step="0.01" min="0" value="{{ viagem.saldo_disponivel|max(0) }}">
+          </div>
+          <button type="submit" class="btn btn-red btn-sm btn-block">
+            <i class="ti ti-lock"></i> Encerrar Viagem
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

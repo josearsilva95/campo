@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; font-size: 10pt; color: #1e293b; background: #fff; }
+  .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0 16px; border-bottom: 2px solid #2563EB; margin-bottom: 20px; }
+  .header h1 { font-size: 18pt; color: #2563EB; font-weight: 700; }
+  .header .meta { text-align: right; font-size: 8pt; color: #64748b; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-size: 10pt; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px; }
+  .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px; }
+  .info-item { display: flex; gap: 6px; }
+  .info-label { font-weight: 600; color: #64748b; min-width: 100px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  thead th { background: #2563EB; color: #fff; padding: 6px 8px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 8pt; }
+  tbody td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  tbody tr:nth-child(even) td { background: #f8faff; }
+  .total-row td { font-weight: 700; background: #eff6ff !important; border-top: 2px solid #2563EB; }
+  .resumo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .resumo-item { background: #f8faff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; }
+  .resumo-cat { font-size: 8pt; font-weight: 600; color: #64748b; text-transform: uppercase; }
+  .resumo-val { font-size: 12pt; font-weight: 700; color: #2563EB; }
+  .saldo-box { background: #eff6ff; border: 2px solid #2563EB; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .saldo-label { font-weight: 600; font-size: 11pt; }
+  .saldo-val { font-size: 16pt; font-weight: 700; color: #10b981; }
+  .assinaturas { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 40px; }
+  .assinatura-box { border-top: 1px solid #1e293b; padding-top: 8px; text-align: center; font-size: 9pt; color: #64748b; }
+  .tag { display: inline-block; background: #eff6ff; color: #2563EB; border: 1px solid #bfdbfe; border-radius: 4px; padding: 1px 6px; font-size: 8pt; font-weight: 600; }
+  .text-red { color: #ef4444; }
+  .text-green { color: #10b981; }
+  .member-list { display: flex; gap: 12px; flex-wrap: wrap; }
+  .member-chip { background: #f1f5f9; border-radius: 20px; padding: 3px 10px; font-size: 9pt; }
+  .parada-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; }
+  .parada-dot { width: 8px; height: 8px; border-radius: 50%; background: #2563EB; margin-top: 4px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Controle de Viagem</h1>
+    <div style="color:#64748b;font-size:9pt">Relatório de Gastos</div>
+  </div>
+  <div class="meta">
+    <div><strong>Nº</strong> {{ viagem.id[:8].upper() }}</div>
+    <div>Gerado em: {{ now().strftime('%d/%m/%Y %H:%M') if now is defined else '' }}</div>
+  </div>
+</div>
+
+<!-- Dados da viagem -->
+<div class="section">
+  <div class="section-title">Dados da Viagem</div>
+  <div class="info-grid">
+    <div class="info-item"><span class="info-label">Obra:</span><span>{{ viagem.obra }}</span></div>
+    <div class="info-item"><span class="info-label">Veículo:</span><span>{{ viagem.carro }} · {{ viagem.placa }}</span></div>
+    <div class="info-item"><span class="info-label">Responsável:</span><span>{{ (viagem.responsavel or {}).nome or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Saída:</span><span>{{ viagem.data_saida }}</span></div>
+    <div class="info-item"><span class="info-label">Retorno Previsto:</span><span>{{ viagem.data_retorno_prevista or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Retorno Real:</span><span>{{ viagem.data_retorno_real or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Caixa Inicial:</span><span>R$ {{ "%.2f"|format(viagem.caixa_valor) }}</span></div>
+    <div class="info-item"><span class="info-label">Saldo Transferido:</span><span>R$ {{ "%.2f"|format(viagem.caixa_transferido or 0) }}</span></div>
+  </div>
+</div>
+
+<!-- Equipe -->
+<div class="section">
+  <div class="section-title">Equipe</div>
+  <div class="member-list">
+    {% for m in equipe %}
+    <span class="member-chip">{{ m.usuario.nome if m.usuario else '—' }}{% if m.usuario_id == viagem.responsavel_id %} (Resp.){% endif %}</span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Rota / Paradas -->
+{% if paradas %}
+<div class="section">
+  <div class="section-title">Rota / Paradas</div>
+  {% for p in paradas %}
+  <div class="parada-row">
+    <div class="parada-dot"></div>
+    <div>
+      <strong>{{ p.local }}</strong> <span class="tag">{{ p.tipo.replace('_', ' ').upper() }}</span>
+      {% if p.instrucoes %}<br><span style="color:#64748b">{{ p.instrucoes }}</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Tabela de gastos -->
+<div class="section">
+  <div class="section-title">Gastos Detalhados</div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Data</th>
+        <th>Categoria</th>
+        <th>Descrição</th>
+        <th>Nota Fiscal</th>
+        <th style="text-align:right">Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in gastos %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ g.created_at[:10] }}</td>
+        <td><span class="tag">{{ g.categoria.upper() }}</span></td>
+        <td>{{ g.descricao or '—' }}</td>
+        <td>{% if g.foto_url %}Sim{% else %}Não{% endif %}</td>
+        <td style="text-align:right">R$ {{ "%.2f"|format(g.valor) }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td colspan="5" style="text-align:right">TOTAL</td>
+        <td style="text-align:right">R$ {{ "%.2f"|format(viagem.total_gastos) }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Resumo por categoria -->
+<div class="section">
+  <div class="section-title">Resumo por Categoria</div>
+  <div class="resumo-grid">
+    {% for cat, valor in por_categoria.items() %}
+    <div class="resumo-item">
+      <div class="resumo-cat">{{ cat.upper() }}</div>
+      <div class="resumo-val">R$ {{ "%.2f"|format(valor) }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Saldo -->
+<div class="section">
+  <div class="saldo-box">
+    <div>
+      <div class="saldo-label">Saldo a Devolver</div>
+      <div style="font-size:8pt;color:#64748b">Caixa Total - Total Gasto</div>
+    </div>
+    <div class="saldo-val">R$ {{ "%.2f"|format(viagem.saldo_disponivel if viagem.saldo_disponivel >= 0 else 0) }}</div>
+  </div>
+</div>
+
+<!-- Assinaturas -->
+<div class="assinaturas">
+  <div class="assinatura-box">
+    <div>{{ (viagem.responsavel or {}).nome or 'Responsável' }}</div>
+    <div>Responsável pela Viagem</div>
+  </div>
+  <div class="assinatura-box">
+    <div>Gestor</div>
+    <div>Aprovado por</div>
+  </div>
+</div>
+
+</body>
+</html>

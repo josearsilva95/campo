@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Dashboard ADM — Controle de Viagem{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-sub">Visão geral das viagens em andamento</p>
+  </div>
+  <a href="{{ url_for('adm.nova_viagem') }}" class="btn btn-primary">
+    <i class="ti ti-plus"></i> Nova Viagem
+  </a>
+</div>
+
+<!-- Estatísticas -->
+<div class="stats-grid">
+  <div class="stat-card stat-blue">
+    <div class="stat-icon"><i class="ti ti-map-pin"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">{{ ativas|length }}</span>
+      <span class="stat-label">Viagens Ativas</span>
+    </div>
+  </div>
+  <div class="stat-card stat-amber">
+    <div class="stat-icon"><i class="ti ti-clock-check"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">{{ pendentes|length }}</span>
+      <span class="stat-label">Aguardando Aprovação</span>
+    </div>
+  </div>
+  <div class="stat-card stat-green">
+    <div class="stat-icon"><i class="ti ti-circle-check"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">{{ encerradas|length }}</span>
+      <span class="stat-label">Encerradas</span>
+    </div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-icon"><i class="ti ti-currency-dollar"></i></div>
+    <div class="stat-info">
+      <span class="stat-value">R$ {{ "%.2f"|format(ativas|sum(attribute='total_gastos')) }}</span>
+      <span class="stat-label">Total Gasto (Ativas)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Pendentes de aprovação -->
+{% if pendentes %}
+<div class="section-header">
+  <h2 class="section-title"><i class="ti ti-alert-triangle"></i> Aguardando Aprovação</h2>
+</div>
+<div class="cards-grid">
+  {% for v in pendentes %}
+  <div class="card card-amber-border">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">{{ v.obra }}</h3>
+        <p class="card-meta">{{ v.carro }} · {{ v.placa }}</p>
+      </div>
+      <span class="badge badge-amber">Encerramento Pendente</span>
+    </div>
+    <div class="card-body">
+      <div class="info-row">
+        <span><i class="ti ti-user"></i> {{ (v.responsavel or {}).nome or '—' }}</span>
+        <span><i class="ti ti-calendar"></i> Saída: {{ v.data_saida }}</span>
+      </div>
+      <div class="card-financeiro">
+        <div class="fin-item">
+          <span class="fin-label">Caixa</span>
+          <span class="fin-value">R$ {{ "%.2f"|format(v.caixa_valor) }}</span>
+        </div>
+        <div class="fin-item">
+          <span class="fin-label">Gasto</span>
+          <span class="fin-value text-red">R$ {{ "%.2f"|format(v.total_gastos) }}</span>
+        </div>
+        <div class="fin-item">
+          <span class="fin-label">Saldo</span>
+          <span class="fin-value text-green">R$ {{ "%.2f"|format(v.saldo_disponivel) }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="{{ url_for('adm.revisar_encerramento', id=v.id) }}" class="btn btn-amber btn-sm">
+        <i class="ti ti-eye"></i> Revisar
+      </a>
+      <a href="{{ url_for('adm.viagem_detalhe', id=v.id) }}" class="btn btn-ghost btn-sm">
+        <i class="ti ti-info-circle"></i> Detalhes
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Viagens Ativas -->
+<div class="section-header">
+  <h2 class="section-title"><i class="ti ti-map-2"></i> Viagens Ativas</h2>
+</div>
+{% if ativas %}
+<div class="cards-grid">
+  {% for v in ativas %}
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">{{ v.obra }}</h3>
+        <p class="card-meta">{{ v.carro }} · {{ v.placa }}</p>
+      </div>
+      <span class="badge badge-green">Ativa</span>
+    </div>
+    <div class="card-body">
+      <div class="info-row">
+        <span><i class="ti ti-user"></i> {{ (v.responsavel or {}).nome or '—' }}</span>
+        <span><i class="ti ti-calendar"></i> {{ v.data_saida }}</span>
+      </div>
+      <div class="card-financeiro">
+        <div class="fin-item">
+          <span class="fin-label">Caixa</span>
+          <span class="fin-value">R$ {{ "%.2f"|format(v.caixa_valor + (v.caixa_transferido or 0)) }}</span>
+        </div>
+        <div class="fin-item">
+          <span class="fin-label">Gasto</span>
+          <span class="fin-value text-red">R$ {{ "%.2f"|format(v.total_gastos) }}</span>
+        </div>
+        <div class="fin-item">
+          <span class="fin-label">Saldo</span>
+          <span class="fin-value {% if v.saldo_disponivel >= 0 %}text-green{% else %}text-red{% endif %}">
+            R$ {{ "%.2f"|format(v.saldo_disponivel) }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="{{ url_for('adm.viagem_detalhe', id=v.id) }}" class="btn btn-primary btn-sm">
+        <i class="ti ti-eye"></i> Detalhes
+      </a>
+      <a href="{{ url_for('adm.editar_viagem', id=v.id) }}" class="btn btn-ghost btn-sm">
+        <i class="ti ti-edit"></i> Editar
+      </a>
+      <a href="{{ url_for('relatorio.pdf_gastos', id=v.id) }}" class="btn btn-ghost btn-sm" target="_blank">
+        <i class="ti ti-file-type-pdf"></i> PDF
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <i class="ti ti-map-off"></i>
+  <p>Nenhuma viagem ativa.</p>
+  <a href="{{ url_for('adm.nova_viagem') }}" class="btn btn-primary">Criar primeira viagem</a>
+</div>
+{% endif %}
+
+<!-- Viagens Encerradas -->
+{% if encerradas %}
+<div class="section-header">
+  <h2 class="section-title"><i class="ti ti-archive"></i> Encerradas</h2>
+</div>
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Obra</th>
+        <th>Responsável</th>
+        <th>Período</th>
+        <th>Total Gasto</th>
+        <th>Devolvido</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in encerradas %}
+      <tr>
+        <td><strong>{{ v.obra }}</strong><br><small>{{ v.carro }} · {{ v.placa }}</small></td>
+        <td>{{ (v.responsavel or {}).nome or '—' }}</td>
+        <td>{{ v.data_saida }} → {{ v.data_retorno_real or '—' }}</td>
+        <td class="text-red">R$ {{ "%.2f"|format(v.total_gastos) }}</td>
+        <td class="text-green">R$ {{ "%.2f"|format(v.saldo_devolvido or 0) }}</td>
+        <td>
+          <a href="{{ url_for('adm.viagem_detalhe', id=v.id) }}" class="btn btn-ghost btn-xs">Ver</a>
+          <a href="{{ url_for('relatorio.pdf_gastos', id=v.id) }}" class="btn btn-ghost btn-xs" target="_blank">PDF</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
