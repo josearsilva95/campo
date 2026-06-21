@@ -4,7 +4,19 @@ from models.usuario import buscar_por_email, verificar_senha
 auth_bp = Blueprint("auth", __name__)
 
 
-@auth_bp.route("/", methods=["GET", "POST"])
+@auth_bp.route("/")
+def index():
+    return redirect(url_for("auth.splash"))
+
+
+@auth_bp.route("/splash")
+def splash():
+    if session.get("usuario_id"):
+        return _redirecionar_perfil(session.get("perfil"))
+    return render_template("splash.html")
+
+
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("usuario_id"):
         return _redirecionar_perfil(session.get("perfil"))

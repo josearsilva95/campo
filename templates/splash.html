@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solisteel — Controle de Viagem</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;}
+body{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:32px;background:#fefefe;font-family:'Inter',sans-serif;}
+
+.scene{position:relative;width:280px;height:280px;display:flex;align-items:center;justify-content:center;}
+
+.logo{
+  width:260px;height:260px;
+  object-fit:contain;
+  transform-origin:center center;
+  opacity:0;
+  transition:opacity .3s ease;
+}
+
+.logo.float{animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(0deg)}}
+
+.brand{text-align:center;opacity:0;transition:opacity .6s ease, transform .6s ease;transform:translateY(14px);}
+.brand.show{opacity:1;transform:translateY(0);}
+.bname{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;letter-spacing:7px;text-transform:uppercase;color:#0A0F1E;}
+.bname span{background:linear-gradient(135deg,#2563EB,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.bsub{font-size:10px;font-weight:600;letter-spacing:5px;text-transform:uppercase;margin-top:7px;color:rgba(0,0,0,.3);}
+
+.ldr{width:190px;opacity:0;transition:opacity .6s ease;transform:translateY(14px);}
+.ldr.show{opacity:1;transform:translateY(0);}
+.ltrack{height:2px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden}
+.lfill{height:2px;border-radius:2px;background:linear-gradient(90deg,#2563EB,#06B6D4);width:0;transition:width 2s ease;}
+.lfill.go{width:100%;}
+.ltxt{font-size:9px;font-weight:600;letter-spacing:5px;text-transform:uppercase;text-align:center;margin-top:9px;color:rgba(0,0,0,.25);animation:bl 1.6s ease infinite;opacity:0;}
+.ltxt.show{opacity:1;}
+@keyframes bl{0%,100%{opacity:.2}50%{opacity:.7}}
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <img class="logo" id="logo" src="{{ url_for('static', filename='logo.png') }}" alt="Solisteel">
+</div>
+
+<div class="brand" id="brand">
+  <div class="bname">SOLI<span>STEEL</span></div>
+  <div class="bsub">Controle de Viagem</div>
+</div>
+
+<div class="ldr" id="ldr">
+  <div class="ltrack"><div class="lfill" id="lfill"></div></div>
+  <div class="ltxt" id="ltxt">Carregando</div>
+</div>
+
+<script>
+const logo  = document.getElementById('logo');
+const brand = document.getElementById('brand');
+const ldr   = document.getElementById('ldr');
+const lfill = document.getElementById('lfill');
+const ltxt  = document.getElementById('ltxt');
+
+let raf   = null;
+let angle = 0;
+let speed = 0;
+
+function start(){
+  setTimeout(() => {
+    logo.style.opacity = '1';
+
+    const ACCEL     = 3.5;
+    const MAX_SPEED = 28;
+    const TOTAL_ROT = 1440;
+    let rotado = 0;
+    let desacelerando = false;
+
+    function spin(){
+      if(!desacelerando){
+        speed = Math.min(speed + ACCEL, MAX_SPEED);
+      } else {
+        speed *= 0.91;
+      }
+
+      angle += speed;
+      rotado += speed;
+      logo.style.transform = 'rotate(' + angle + 'deg)';
+
+      if(rotado >= TOTAL_ROT * 0.68) desacelerando = true;
+
+      if(desacelerando && speed < 0.15){
+        logo.style.transform = 'rotate(0deg)';
+        logo.classList.add('float');
+
+        setTimeout(() => { brand.classList.add('show'); }, 200);
+        setTimeout(() => { ldr.classList.add('show'); ltxt.classList.add('show'); }, 400);
+        setTimeout(() => { lfill.classList.add('go'); }, 450);
+
+        setTimeout(() => {
+          window.location.href = "{{ url_for('auth.login') }}";
+        }, 2800);
+
+        return;
+      }
+
+      raf = requestAnimationFrame(spin);
+    }
+
+    spin();
+  }, 200);
+}
+
+window.addEventListener('load', start);
+</script>
+</body>
+</html>
