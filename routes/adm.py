@@ -372,6 +372,6 @@ def redefinir_senha(id):
 @adm_bp.route("/funcionarios/<id>/excluir", methods=["POST"])
 @requer_adm
 def excluir_funcionario(id):
-    um.desativar_usuario(id)
-    flash("Funcionário desativado.", "success")
+    um.excluir_usuario(id)
+    flash("Funcionário excluído.", "success")
     return redirect(url_for("adm.funcionarios"))

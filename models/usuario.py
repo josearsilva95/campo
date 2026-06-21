@@ -66,11 +66,5 @@ def redefinir_senha(usuario_id: str, nova_senha: str):
     return res.data[0] if res.data else None
 
 
-def desativar_usuario(usuario_id: str):
-    res = (
-        supabase.table("usuarios")
-        .update({"ativo": False})
-        .eq("id", usuario_id)
-        .execute()
-    )
-    return res.data[0] if res.data else None
+def excluir_usuario(usuario_id: str):
+    supabase.table("usuarios").delete().eq("id", usuario_id).execute()
