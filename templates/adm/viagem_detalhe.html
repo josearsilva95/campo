@@ -215,6 +215,48 @@
       </div>
     </div>
 
+    <!-- Enviar dinheiro ao técnico -->
+    {% if viagem.status == 'ativa' %}
+    <div class="card mb-4">
+      <div class="card-header-simple">
+        <h3><i class="ti ti-cash"></i> Enviar Dinheiro ao Técnico</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-row-detail" style="margin-bottom:12px">
+          <span class="info-label">Caixa inicial</span>
+          <span>R$ {{ "%.2f"|format(viagem.caixa_valor) }}</span>
+        </div>
+        {% if repasses %}
+        <div style="margin-bottom:14px">
+          {% for r in repasses %}
+          <div class="info-row-detail">
+            <span class="info-label" style="font-size:10px;color:var(--muted)">{{ r.created_at[:10] }} — {{ r.descricao or 'Repasse' }}</span>
+            <span style="color:var(--green);font-weight:700;font-size:11px">+ R$ {{ "%.2f"|format(r.valor) }}</span>
+          </div>
+          {% endfor %}
+          <div class="info-row-detail" style="border-top:1px solid var(--border2);margin-top:6px;padding-top:6px">
+            <span class="info-label">Total enviado</span>
+            <span style="color:var(--green);font-weight:800">R$ {{ "%.2f"|format(viagem.caixa_transferido) }}</span>
+          </div>
+        </div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('adm.enviar_dinheiro', id=viagem.id) }}">
+          <div class="form-group">
+            <label>Valor a Enviar (R$)</label>
+            <input type="number" name="valor" step="0.01" min="0.01" placeholder="0,00" required>
+          </div>
+          <div class="form-group">
+            <label>Motivo</label>
+            <input type="text" name="descricao" placeholder="Ex: Reforço de caixa, material extra…" style="text-transform:none">
+          </div>
+          <button type="submit" class="btn btn-green btn-sm btn-block">
+            <i class="ti ti-send"></i> Enviar Dinheiro
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Encerrar viagem (ADM direto) -->
     {% if viagem.status == 'ativa' %}
     <div class="card mb-4 card-danger">

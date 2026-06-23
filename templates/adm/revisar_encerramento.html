@@ -25,10 +25,16 @@
             <span>Caixa Inicial</span>
             <span>R$ {{ "%.2f"|format(viagem.caixa_valor) }}</span>
           </div>
-          {% if viagem.caixa_transferido %}
+          {% if repasses %}
+          {% for r in repasses %}
+          <div class="fin-row" style="font-size:10px;color:var(--muted)">
+            <span><i class="ti ti-cash" style="font-size:9px"></i> {{ r.created_at[:10] }} — {{ r.descricao or 'Repasse' }}</span>
+            <span style="color:var(--green)">+ R$ {{ "%.2f"|format(r.valor) }}</span>
+          </div>
+          {% endfor %}
           <div class="fin-row">
-            <span>Saldo Transferido</span>
-            <span>R$ {{ "%.2f"|format(viagem.caixa_transferido) }}</span>
+            <span>Total Repasses</span>
+            <span style="color:var(--green);font-weight:700">+ R$ {{ "%.2f"|format(viagem.caixa_transferido) }}</span>
           </div>
           {% endif %}
           <div class="fin-row text-red">

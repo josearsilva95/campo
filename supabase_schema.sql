@@ -63,6 +63,15 @@ CREATE TABLE IF NOT EXISTS paradas (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- REPASSES DE CAIXA
+CREATE TABLE IF NOT EXISTS repasses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  viagem_id UUID REFERENCES viagens(id) ON DELETE CASCADE,
+  valor NUMERIC(10,2) NOT NULL,
+  descricao TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- CHECKLISTS
 CREATE TABLE IF NOT EXISTS checklists (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -88,14 +97,39 @@ CREATE TABLE IF NOT EXISTS pontos (
   viagem_id UUID REFERENCES viagens(id) ON DELETE CASCADE,
   usuario_id UUID REFERENCES usuarios(id),
   data DATE NOT NULL,
-  saida_hotel TIME,
-  chegada_obra TIME,
-  saida_obra TIME,
-  chegada_hotel TIME,
-  total_horas NUMERIC(4,2),
+  entrada1 TIME,
+  saida1   TIME,
+  entrada2 TIME,
+  saida2   TIME,
+  entrada3 TIME,
+  saida3   TIME,
+  total_horas NUMERIC(5,2),
   created_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(viagem_id, usuario_id, data)
 );
+
+-- ============================================================
+-- MIGRATION: rode no SQL Editor do Supabase se a tabela pontos
+-- já existir com as colunas antigas (saida_hotel, chegada_obra…)
+-- ============================================================
+-- ALTER TABLE pontos
+--   ADD COLUMN IF NOT EXISTS entrada1 TIME,
+--   ADD COLUMN IF NOT EXISTS saida1   TIME,
+--   ADD COLUMN IF NOT EXISTS entrada2 TIME,
+--   ADD COLUMN IF NOT EXISTS saida2   TIME,
+--   ADD COLUMN IF NOT EXISTS entrada3 TIME,
+--   ADD COLUMN IF NOT EXISTS saida3   TIME;
+-- ALTER TABLE pontos
+--   DROP COLUMN IF EXISTS saida_hotel,
+--   DROP COLUMN IF EXISTS chegada_obra,
+--   DROP COLUMN IF EXISTS saida_obra,
+--   DROP COLUMN IF EXISTS chegada_hotel;
+-- ALTER TABLE pontos ALTER COLUMN total_horas TYPE NUMERIC(5,2);
+
+-- MIGRATION para geolocalização (rode se a tabela pontos já existir):
+-- ALTER TABLE pontos
+--   ADD COLUMN IF NOT EXISTS lat NUMERIC(10,7),
+--   ADD COLUMN IF NOT EXISTS lon NUMERIC(10,7);
 
 -- ============================================================
 -- Supabase Storage: criar bucket "notas" via dashboard

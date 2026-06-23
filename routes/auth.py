@@ -6,14 +6,12 @@ auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/")
 def index():
-    return redirect(url_for("auth.splash"))
+    return redirect(url_for("auth.login"))
 
 
 @auth_bp.route("/splash")
 def splash():
-    if session.get("usuario_id"):
-        return _redirecionar_perfil(session.get("perfil"))
-    return render_template("splash.html")
+    return redirect(url_for("auth.login"))
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])

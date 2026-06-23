@@ -14,47 +14,34 @@
 
 <div class="card">
   <div class="card-header-simple">
-    <h3><i class="ti ti-clock"></i> Registros de Ponto</h3>
-    <span class="badge badge-blue">Total: {{ "%.2f"|format(total) }}h</span>
+    <h3><i class="ti ti-clock"></i> Meus Registros de Ponto</h3>
   </div>
   <div class="table-wrapper">
     <table class="table">
       <thead>
         <tr>
-          <th>Técnico</th>
           <th>Data</th>
-          <th>Saída Hotel</th>
-          <th>Chegada Obra</th>
-          <th>Saída Obra</th>
-          <th>Chegada Hotel</th>
-          <th>Total</th>
-          <th>Extras</th>
+          <th>Entrada 1</th>
+          <th>Saída 1</th>
+          <th>Entrada 2</th>
+          <th>Saída 2</th>
+          <th>Entrada 3</th>
+          <th>Saída 3</th>
         </tr>
       </thead>
       <tbody>
         {% for p in pontos %}
         <tr>
-          <td>{{ (p.usuario or {}).nome or '—' }}</td>
           <td>{{ p.data }}</td>
-          <td>{{ p.saida_hotel[:5] if p.saida_hotel else '—' }}</td>
-          <td>{{ p.chegada_obra[:5] if p.chegada_obra else '—' }}</td>
-          <td>{{ p.saida_obra[:5] if p.saida_obra else '—' }}</td>
-          <td>{{ p.chegada_hotel[:5] if p.chegada_hotel else '—' }}</td>
-          <td>
-            {% if p.total_horas %}
-            <span class="{% if p.total_horas > 8 %}text-amber{% else %}text-green{% endif %}">
-              {{ p.total_horas }}h
-            </span>
-            {% else %}—{% endif %}
-          </td>
-          <td>
-            {% if p.total_horas and p.total_horas > 8 %}
-            <span class="text-amber">{{ "%.2f"|format(p.total_horas - 8) }}h</span>
-            {% else %}—{% endif %}
-          </td>
+          <td>{{ p.entrada1[:5] if p.entrada1 else '—' }}</td>
+          <td>{{ p.saida1[:5]   if p.saida1   else '—' }}</td>
+          <td>{{ p.entrada2[:5] if p.entrada2 else '—' }}</td>
+          <td>{{ p.saida2[:5]   if p.saida2   else '—' }}</td>
+          <td>{{ p.entrada3[:5] if p.entrada3 else '—' }}</td>
+          <td>{{ p.saida3[:5]   if p.saida3   else '—' }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="text-center text-muted">Nenhum ponto registrado.</td></tr>
+        <tr><td colspan="7" class="text-center text-muted">Nenhum ponto registrado.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -29,6 +29,7 @@
         {% if n.tipo == 'nova_viagem' %}<i class="ti ti-map-pin"></i> Nova Viagem
         {% elif n.tipo == 'nova_parada' %}<i class="ti ti-route"></i> Nova Parada
         {% elif n.tipo == 'encerramento_aprovado' %}<i class="ti ti-circle-check"></i> Encerramento Aprovado
+        {% elif n.tipo == 'envio_dinheiro' %}<i class="ti ti-cash"></i> Dinheiro Enviado
         {% endif %}
         · {{ n.created_at[:10] }}
       </div>

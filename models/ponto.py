@@ -1,6 +1,9 @@
 from datetime import datetime, date
 from models import supabase
 
+CAMPOS_PONTO = ["entrada1", "saida1", "entrada2", "saida2", "entrada3", "saida3"]
+_PARES = [("entrada1", "saida1"), ("entrada2", "saida2"), ("entrada3", "saida3")]
+
 
 def _parse_time(t_str: str):
     if not t_str:
@@ -14,17 +17,20 @@ def _parse_time(t_str: str):
             return None
 
 
-def calcular_horas(saida_hotel: str, chegada_hotel: str) -> float | None:
-    t_saida = _parse_time(saida_hotel)
-    t_chegada = _parse_time(chegada_hotel)
-    if not t_saida or not t_chegada:
-        return None
-    dt_saida = datetime.combine(date.today(), t_saida)
-    dt_chegada = datetime.combine(date.today(), t_chegada)
-    diff = dt_chegada - dt_saida
-    if diff.total_seconds() < 0:
-        return None
-    return round(diff.total_seconds() / 3600, 2)
+def calcular_horas_total(dados: dict) -> float | None:
+    total = 0.0
+    any_pair = False
+    for e, s in _PARES:
+        t_e = _parse_time(dados.get(e))
+        t_s = _parse_time(dados.get(s))
+        if t_e and t_s:
+            dt_e = datetime.combine(date.today(), t_e)
+            dt_s = datetime.combine(date.today(), t_s)
+            diff = dt_s - dt_e
+            if diff.total_seconds() > 0:
+                total += diff.total_seconds() / 3600
+                any_pair = True
+    return round(total, 2) if any_pair else None
 
 
 def buscar_ponto(viagem_id: str, usuario_id: str, data_str: str):
@@ -39,25 +45,42 @@ def buscar_ponto(viagem_id: str, usuario_id: str, data_str: str):
     return res.data[0] if res.data else None
 
 
-def registrar_ponto(viagem_id: str, usuario_id: str, data_str: str, campos: dict):
+def registrar_ponto(viagem_id: str, usuario_id: str, data_str: str, campos: dict,
+                    lat: float = None, lon: float = None):
     existente = buscar_ponto(viagem_id, usuario_id, data_str)
 
-    if campos.get("chegada_hotel") and campos.get("saida_hotel"):
-        saida = campos.get("saida_hotel") or (existente or {}).get("saida_hotel")
-        campos["total_horas"] = calcular_horas(saida, campos["chegada_hotel"])
-    elif existente and existente.get("saida_hotel") and campos.get("chegada_hotel"):
-        campos["total_horas"] = calcular_horas(existente["saida_hotel"], campos["chegada_hotel"])
-
     if existente:
+        # Só salva campos que ainda não foram marcados — sem edição
+        campos_novos = {k: v for k, v in campos.items() if k in CAMPOS_PONTO and not existente.get(k)}
+        if not campos_novos:
+            return existente
+
+        # GPS: grava somente se ainda não tem localização
+        if lat is not None and lon is not None and existente.get("lat") is None:
+            campos_novos["lat"] = lat
+            campos_novos["lon"] = lon
+
+        merged = dict(existente)
+        merged.update(campos_novos)
+        total = calcular_horas_total(merged)
+        if total is not None:
+            campos_novos["total_horas"] = total
+
         res = (
             supabase.table("pontos")
-            .update(campos)
+            .update(campos_novos)
             .eq("id", existente["id"])
             .execute()
         )
         return res.data[0] if res.data else None
     else:
         dados = {"viagem_id": viagem_id, "usuario_id": usuario_id, "data": data_str, **campos}
+        if lat is not None and lon is not None:
+            dados["lat"] = lat
+            dados["lon"] = lon
+        total = calcular_horas_total(dados)
+        if total is not None:
+            dados["total_horas"] = total
         res = supabase.table("pontos").insert(dados).execute()
         return res.data[0] if res.data else None
 
@@ -67,6 +90,18 @@ def historico_pontos(viagem_id: str):
         supabase.table("pontos")
         .select("*, usuario:usuarios(id, nome)")
         .eq("viagem_id", viagem_id)
+        .order("data")
+        .execute()
+    )
+    return res.data or []
+
+
+def historico_pontos_usuario(viagem_id: str, usuario_id: str):
+    res = (
+        supabase.table("pontos")
+        .select("*")
+        .eq("viagem_id", viagem_id)
+        .eq("usuario_id", usuario_id)
         .order("data")
         .execute()
     )

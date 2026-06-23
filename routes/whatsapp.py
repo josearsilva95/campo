@@ -54,6 +54,20 @@ def msg_nova_parada(obra: str, local: str, tipo: str, instrucoes: str) -> str:
     )
 
 
+def msg_envio_dinheiro(nome: str, obra: str, valor: float, descricao: str) -> str:
+    url = os.getenv("URL_SISTEMA", "http://localhost:5000")
+    return (
+        f"💸 Repasse recebido!\n\n"
+        f"Olá, {nome}!\n\n"
+        f"🏗️ Obra: {obra}\n"
+        f"💰 Valor enviado: R$ {valor:.2f}\n"
+        f"📋 Motivo: {descricao}\n\n"
+        f"O saldo da viagem foi atualizado.\n"
+        f"🔗 {url}\n\n"
+        f"Controle de Viagem"
+    )
+
+
 def msg_encerramento_aprovado(obra: str, data_retorno: str) -> str:
     return (
         f"✅ Encerramento aprovado!\n\n"

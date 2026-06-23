@@ -42,11 +42,6 @@
   <a href="{{ url_for('tecnico.ponto_historico', id=viagem.id) }}" class="quick-btn quick-btn-purple">
     <i class="ti ti-history"></i><span>Histórico</span>
   </a>
-  {% if e_responsavel %}
-  <a href="{{ url_for('tecnico.checklist', id=viagem.id, tipo='saida') }}" class="quick-btn quick-btn-amber">
-    <i class="ti ti-checklist"></i><span>Checklist</span>
-  </a>
-  {% endif %}
   {% if e_responsavel and viagem.status == 'ativa' %}
   <a href="{{ url_for('tecnico.encerrar', id=viagem.id) }}" class="quick-btn quick-btn-red">
     <i class="ti ti-lock"></i><span>Encerrar</span>

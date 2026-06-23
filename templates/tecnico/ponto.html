@@ -5,7 +5,7 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">Registro de Ponto</h1>
-    <p class="page-sub">{{ viagem.obra }} · {{ hoje }}</p>
+    <p class="page-sub">{{ viagem.obra }}</p>
   </div>
   <div class="btn-group">
     <a href="{{ url_for('tecnico.ponto_historico', id=viagem.id) }}" class="btn btn-ghost btn-sm">
@@ -17,48 +17,80 @@
   </div>
 </div>
 
+<!-- Seletor de data -->
+<div class="ponto-date-bar">
+  <label><i class="ti ti-calendar"></i> Data</label>
+  <form method="GET" style="flex:1;display:flex;gap:8px">
+    <input type="date" name="data" value="{{ data_sel }}"
+           min="{{ data_min }}" max="{{ hoje }}"
+           onchange="this.form.submit()">
+  </form>
+</div>
+
 <div class="ponto-card">
   <div class="ponto-grid">
-    {% set registros = [
-      ('saida_hotel', 'ti-door-exit', 'Saída do Hotel', 'text-amber'),
-      ('chegada_obra', 'ti-building-factory-2', 'Chegada na Obra', 'text-blue'),
-      ('saida_obra', 'ti-building-off', 'Saída da Obra', 'text-purple'),
-      ('chegada_hotel', 'ti-door-enter', 'Chegada ao Hotel', 'text-green'),
+
+    {% set campos_lista = [
+      ('entrada1', 'ti-login',  'Entrada 1', 'text-green'),
+      ('saida1',   'ti-logout', 'Saída 1',   'text-amber'),
+      ('entrada2', 'ti-login',  'Entrada 2', 'text-green'),
+      ('saida2',   'ti-logout', 'Saída 2',   'text-amber'),
+      ('entrada3', 'ti-login',  'Entrada 3', 'text-green'),
+      ('saida3',   'ti-logout', 'Saída 3',   'text-amber'),
     ] %}
 
-    {% for campo, icon, label, color in registros %}
-    <div class="ponto-item {% if ponto and ponto.get(campo) %}ponto-ok{% endif %}">
+    {# Descobre o índice do próximo campo livre (em ordem) #}
+    {% set ns = namespace(proximo=0, achou=false) %}
+    {% for campo, icon, label, color in campos_lista %}
+      {% if not ns.achou %}
+        {% if ponto and ponto.get(campo) %}
+          {% set ns.proximo = loop.index %}
+        {% else %}
+          {% set ns.achou = true %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% for campo, icon, label, color in campos_lista %}
+    {% set idx = loop.index0 %}
+    {% set preenchido = ponto and ponto.get(campo) %}
+    {% set e_proximo  = idx == ns.proximo %}
+    {% set bloqueado  = not preenchido and not e_proximo %}
+
+    <div class="ponto-item
+      {% if preenchido %}ponto-ok{% endif %}
+      {% if bloqueado %}ponto-bloqueado{% endif %}">
+
       <div class="ponto-icon {{ color }}">
         <i class="ti {{ icon }}"></i>
       </div>
+
       <div class="ponto-info">
         <div class="ponto-label">{{ label }}</div>
-        {% if ponto and ponto.get(campo) %}
-        <div class="ponto-hora">{{ ponto.get(campo)[:5] }}</div>
+
+        {% if preenchido %}
+          {# Já preenchido — só exibe, sem forma de editar #}
+          <div class="ponto-hora">{{ ponto.get(campo)[:5] }}</div>
+
+        {% elif e_proximo %}
+          {# Próximo na fila — mostra formulário #}
+          <form method="POST" class="ponto-form">
+            <input type="hidden" name="data"  value="{{ data_sel }}">
+            <input type="hidden" name="campo" value="{{ campo }}">
+            <div class="ponto-input-row">
+              <input type="time" name="hora" required>
+              <button type="submit" class="btn btn-primary btn-xs">OK</button>
+            </div>
+          </form>
+
         {% else %}
-        <form method="POST" class="ponto-form">
-          <input type="hidden" name="campo" value="{{ campo }}">
-          <div class="ponto-input-row">
-            <input type="time" name="hora" required>
-            <button type="submit" class="btn btn-primary btn-xs">OK</button>
-          </div>
-        </form>
+          {# Ainda bloqueado — aguarda os anteriores #}
+          <div class="ponto-dash">Aguardando anterior</div>
         {% endif %}
       </div>
     </div>
     {% endfor %}
-  </div>
 
-  {% if ponto and ponto.total_horas %}
-  <div class="ponto-total">
-    <div class="ponto-total-label">Total de Horas Hoje</div>
-    <div class="ponto-total-valor">{{ ponto.total_horas }}h</div>
-    {% if ponto.total_horas > 8 %}
-    <div class="ponto-extras text-amber">
-      <i class="ti ti-clock-plus"></i> {{ "%.2f"|format(ponto.total_horas - 8) }}h extras
-    </div>
-    {% endif %}
   </div>
-  {% endif %}
 </div>
 {% endblock %}

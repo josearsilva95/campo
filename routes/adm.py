@@ -7,11 +7,13 @@ from models.gasto import listar_gastos, gastos_por_categoria, listar_viagens_com
 from models.parada import adicionar_parada, listar_paradas, marcar_notificado
 from models.checklist import buscar_checklist
 from models.notificacao import criar_notificacao
+from models.repasse import registrar_repasse, listar_repasses
 from routes.whatsapp import (
     enviar_whatsapp,
     msg_escalar_tecnico,
     msg_nova_parada,
     msg_encerramento_aprovado,
+    msg_envio_dinheiro,
 )
 
 adm_bp = Blueprint("adm", __name__, url_prefix="/adm")
@@ -181,6 +183,7 @@ def viagem_detalhe(id):
     checklist_saida = buscar_checklist(id, "saida")
     checklist_retorno = buscar_checklist(id, "retorno")
 
+    repasses = listar_repasses(id)
     return render_template(
         "adm/viagem_detalhe.html",
         viagem=viagem,
@@ -190,6 +193,7 @@ def viagem_detalhe(id):
         paradas=paradas,
         checklist_saida=checklist_saida,
         checklist_retorno=checklist_retorno,
+        repasses=repasses,
     )
 
 
@@ -244,6 +248,7 @@ def revisar_encerramento(id):
     equipe = vm.listar_tecnicos_viagem(id)
     viagens_ativas = vm.listar_viagens_ativas_exceto(id)
 
+    repasses = listar_repasses(id)
     return render_template(
         "adm/revisar_encerramento.html",
         viagem=viagem,
@@ -251,6 +256,7 @@ def revisar_encerramento(id):
         por_categoria=por_categoria,
         equipe=equipe,
         viagens_ativas=viagens_ativas,
+        repasses=repasses,
     )
 
 
@@ -359,6 +365,41 @@ def excluir_viagem(id):
     vm.excluir_viagem(id)
     flash(f"Viagem '{viagem['obra']}' excluída com sucesso.", "success")
     return redirect(url_for("adm.dashboard"))
+
+
+# ── Enviar dinheiro para técnico ─────────────────────────────
+@adm_bp.route("/viagem/<id>/enviar-dinheiro", methods=["POST"])
+@requer_adm
+def enviar_dinheiro(id):
+    viagem = vm.buscar_viagem(id)
+    if not viagem:
+        flash("Viagem não encontrada.", "error")
+        return redirect(url_for("adm.dashboard"))
+
+    try:
+        valor = float(request.form.get("valor", "0").replace(",", ".") or 0)
+    except ValueError:
+        valor = 0
+
+    descricao = request.form.get("descricao", "").strip() or "Repasse adicional"
+
+    if valor <= 0:
+        flash("Informe um valor válido.", "error")
+        return redirect(url_for("adm.viagem_detalhe", id=id))
+
+    atual_transferido = float(viagem.get("caixa_transferido") or 0)
+    vm.atualizar_viagem(id, {"caixa_transferido": atual_transferido + valor})
+    registrar_repasse(id, valor, descricao)
+
+    criar_notificacao(
+        viagem["responsavel_id"],
+        "envio_dinheiro",
+        f"O gestor enviou R$ {valor:.2f} para a viagem {viagem['obra']}. Motivo: {descricao}.",
+        id,
+    )
+
+    flash(f"R$ {valor:.2f} enviado ao técnico com sucesso!", "success")
+    return redirect(url_for("adm.viagem_detalhe", id=id))
 
 
 # ── Encerramento direto pelo ADM ─────────────────────────────

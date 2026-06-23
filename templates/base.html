@@ -29,7 +29,7 @@
   <nav class="navbar">
     <div class="navbar-inner">
       <a href="{{ url_for('adm.dashboard') if session.get('perfil') == 'adm' else url_for('tecnico.dashboard') }}" class="navbar-logo">
-        <div class="nav-logo-icon"><img src="/static/logo.png" alt="Logo" style="width:34px;height:34px;object-fit:contain;border-radius:9px;background:#fff;padding:2px"></div>
+        <div class="nav-logo-icon"><img src="/static/logo.png" alt="Logo" style="width:42px;height:42px;object-fit:contain;border-radius:9px;background:#fff;padding:2px"></div>
         <div class="nav-logo-text"><span>Campo</span></div>
       </a>
 
@@ -91,6 +91,7 @@
   </main>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/offline-queue.js') }}"></script>
   {% block scripts %}{% endblock %}
 
   {% if session.get('usuario_id') %}

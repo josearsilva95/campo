@@ -5,7 +5,7 @@ from functools import wraps
 from models import viagem as vm
 from models import usuario as um
 from models.gasto import listar_gastos, lancar_gasto, deletar_gasto, upload_foto, gastos_por_categoria
-from models.ponto import registrar_ponto, buscar_ponto, historico_pontos, total_horas_viagem
+from models.ponto import registrar_ponto, buscar_ponto, historico_pontos, historico_pontos_usuario, total_horas_viagem, CAMPOS_PONTO
 from models.parada import listar_paradas
 from models.checklist import buscar_checklist, salvar_checklist, CAMPOS_BOOL
 from models.notificacao import buscar_nao_lidas, marcar_todas_lidas, marcar_lida
@@ -166,17 +166,39 @@ def ponto(id):
         return redirect(url_for("tecnico.dashboard"))
 
     hoje = date.today().isoformat()
-    ponto_hoje = buscar_ponto(id, uid, hoje)
+    data_min = str(viagem.get("data_saida", hoje))
 
-    if request.method == "POST":
+    # Data vem do form (POST) ou query string (GET), padrão = hoje
+    data_sel = request.form.get("data") or request.args.get("data") or hoje
+    # Limita: não antes da saída e não depois de hoje
+    if data_sel < data_min:
+        data_sel = data_min
+    if data_sel > hoje:
+        data_sel = hoje
+
+    ponto_dia = buscar_ponto(id, uid, data_sel)
+
+    if request.method == "POST" and request.form.get("campo"):
         campo = request.form.get("campo")
-        hora = request.form.get("hora")
-        if campo and hora:
-            registrar_ponto(id, uid, hoje, {campo: hora})
+        hora  = request.form.get("hora")
+        if campo and hora and campo in CAMPOS_PONTO:
+            try:
+                lat = float(request.form.get("lat")) if request.form.get("lat") else None
+                lon = float(request.form.get("lon")) if request.form.get("lon") else None
+            except (ValueError, TypeError):
+                lat = lon = None
+            registrar_ponto(id, uid, data_sel, {campo: hora}, lat=lat, lon=lon)
             flash("Ponto registrado!", "success")
-            return redirect(url_for("tecnico.ponto", id=id))
+            return redirect(url_for("tecnico.ponto", id=id, data=data_sel))
 
-    return render_template("tecnico/ponto.html", viagem=viagem, ponto=ponto_hoje, hoje=hoje)
+    return render_template(
+        "tecnico/ponto.html",
+        viagem=viagem,
+        ponto=ponto_dia,
+        hoje=hoje,
+        data_sel=data_sel,
+        data_min=data_min,
+    )
 
 
 # ── Histórico de pontos ──────────────────────────────────────
@@ -189,9 +211,8 @@ def ponto_historico(id):
         flash(erro, "error")
         return redirect(url_for("tecnico.dashboard"))
 
-    pontos = historico_pontos(id)
-    total = total_horas_viagem(id, uid)
-    return render_template("tecnico/ponto_historico.html", viagem=viagem, pontos=pontos, total=total)
+    pontos = historico_pontos_usuario(id, uid)
+    return render_template("tecnico/ponto_historico.html", viagem=viagem, pontos=pontos)
 
 
 # ── Checklist ────────────────────────────────────────────────
