@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v={{ v }}">
 </head>
 <body>
 
@@ -90,8 +90,8 @@
     {% block content %}{% endblock %}
   </main>
 
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/offline-queue.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}?v={{ v }}"></script>
+  <script src="{{ url_for('static', filename='js/offline-queue.js') }}?v={{ v }}"></script>
   {% block scripts %}{% endblock %}
 
   {% if session.get('usuario_id') %}

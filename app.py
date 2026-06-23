@@ -1,4 +1,5 @@
 import os
+import subprocess
 import config
 from flask import Flask
 from routes.auth import auth_bp
@@ -9,6 +10,21 @@ from routes.whatsapp import whatsapp_bp
 
 app = Flask(__name__)
 app.config.from_object(config)
+
+def _git_hash():
+    try:
+        return subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+    except Exception:
+        return 'dev'
+
+APP_VERSION = _git_hash()
+
+@app.context_processor
+def inject_version():
+    return {'v': APP_VERSION}
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(adm_bp)
