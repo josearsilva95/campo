@@ -1,6 +1,7 @@
-/* Service Worker — Campo v4 */
-const CACHE = 'campo-v4';
+/* Service Worker — Campo v5 */
+const CACHE = 'campo-v5';
 
+// Só cacheia arquivos verdadeiramente estáticos (não HTML)
 const STATIC_URLS = [
   '/static/css/main.css',
   '/static/js/main.js',
@@ -8,7 +9,6 @@ const STATIC_URLS = [
   '/static/logo.png',
 ];
 
-// ── Install: pré-cache de assets estáticos ─────────────────
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(
@@ -16,7 +16,6 @@ self.addEventListener('install', e => {
   );
 });
 
-// ── Activate: limpa caches antigos ────────────────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -26,9 +25,8 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// ── Fetch ─────────────────────────────────────────────────
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return; // POST: deixa o JS gerenciar
+  if (e.request.method !== 'GET') return;
 
   const url = e.request.url;
 
@@ -48,20 +46,14 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Páginas HTML: network-first, fallback para cache
+  // Páginas HTML: SEMPRE busca da rede — nunca serve cache de HTML
+  // Se offline, mostra o que tiver em cache apenas como último recurso
   e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res && res.status === 200) {
-          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-        }
-        return res;
-      })
+    fetch(e.request, { cache: 'no-store' })
       .catch(() => caches.match(e.request))
   );
 });
 
-// ── Background Sync: avisa os clientes para sincronizar ───
 self.addEventListener('sync', e => {
   if (e.tag === 'flush-queue') {
     e.waitUntil(
