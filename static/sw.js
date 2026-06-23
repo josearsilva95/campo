@@ -1,5 +1,5 @@
-/* Service Worker — Campo v3 */
-const CACHE = 'campo-v3';
+/* Service Worker — Campo v4 */
+const CACHE = 'campo-v4';
 
 const STATIC_URLS = [
   '/static/css/main.css',
