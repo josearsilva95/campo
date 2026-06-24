@@ -1,7 +1,7 @@
 /* Controle de Viagem — JS principal */
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
 }
 
 // Auto-dismiss flash messages

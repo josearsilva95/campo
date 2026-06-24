@@ -1,18 +1,15 @@
-/* Service Worker — Campo v5 */
-const CACHE = 'campo-v5';
+/* Service Worker — Campo v6 */
+const CACHE = 'campo-v6';
 
-// Só cacheia arquivos verdadeiramente estáticos (não HTML)
-const STATIC_URLS = [
-  '/static/css/main.css',
-  '/static/js/main.js',
-  '/static/js/offline-queue.js',
+// Pré-cache apenas do logo (sem versão, raramente muda)
+const PRECACHE_URLS = [
   '/static/logo.png',
 ];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(STATIC_URLS).catch(() => {}))
+    caches.open(CACHE).then(c => c.addAll(PRECACHE_URLS).catch(() => {}))
   );
 });
 
@@ -30,7 +27,23 @@ self.addEventListener('fetch', e => {
 
   const url = e.request.url;
 
-  // Assets estáticos: cache-first
+  // CSS/JS com ?v= versão: cache-first (URL muda a cada deploy, então sempre fresco quando muda)
+  if (url.includes('/static/css/') || url.includes('/static/js/')) {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(res => {
+          if (res && res.status === 200) {
+            caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+          }
+          return res;
+        }).catch(() => new Response('', { status: 503 }));
+      })
+    );
+    return;
+  }
+
+  // Imagens e outros estáticos: cache-first
   if (url.includes('/static/')) {
     e.respondWith(
       caches.match(e.request).then(cached => {
@@ -47,7 +60,6 @@ self.addEventListener('fetch', e => {
   }
 
   // Páginas HTML: SEMPRE busca da rede — nunca serve cache de HTML
-  // Se offline, mostra o que tiver em cache apenas como último recurso
   e.respondWith(
     fetch(e.request, { cache: 'no-store' })
       .catch(() => caches.match(e.request))
