@@ -4,6 +4,7 @@ from functools import wraps
 from models import viagem as vm
 from models import usuario as um
 from models.gasto import listar_gastos, gastos_por_categoria, listar_viagens_com_fotos, listar_fotos_viagem, resumo_anual
+from models.ponto import fechar_dia, rh_resumo_tecnicos, pontos_funcionario_por_viagem
 from models.parada import adicionar_parada, listar_paradas, marcar_notificado
 from models.checklist import buscar_checklist
 from models.notificacao import criar_notificacao
@@ -417,6 +418,48 @@ def encerrar_direto(id):
     vm.aprovar_encerramento(id, data_retorno_real, saldo_devolvido=saldo_devolvido)
     flash("Viagem encerrada.", "success")
     return redirect(url_for("adm.dashboard"))
+
+
+# ── RH ───────────────────────────────────────────────────────
+@adm_bp.route("/rh")
+@requer_adm
+def rh():
+    tecnicos = um.listar_tecnicos()
+    ids = [t["id"] for t in tecnicos]
+    resumo = rh_resumo_tecnicos(ids)
+    return render_template("adm/rh.html", tecnicos=tecnicos, resumo=resumo)
+
+
+@adm_bp.route("/rh/<usuario_id>")
+@requer_adm
+def rh_funcionario(usuario_id):
+    funcionario = um.buscar_por_id(usuario_id)
+    if not funcionario:
+        flash("Funcionário não encontrado.", "error")
+        return redirect(url_for("adm.rh"))
+    grupos = pontos_funcionario_por_viagem(usuario_id)
+    total_geral = round(sum(g["total_horas"] for g in grupos), 2)
+    dias_abertos = sum(g["dias_abertos"] for g in grupos)
+    dias_total = sum(len(g["pontos"]) for g in grupos)
+    return render_template(
+        "adm/rh_funcionario.html",
+        funcionario=funcionario,
+        grupos=grupos,
+        total_geral=total_geral,
+        dias_abertos=dias_abertos,
+        dias_total=dias_total,
+    )
+
+
+@adm_bp.route("/rh/<usuario_id>/fechar-dia", methods=["POST"])
+@requer_adm
+def rh_fechar_dia(usuario_id):
+    viagem_id = request.form.get("viagem_id")
+    data = request.form.get("data")
+    if viagem_id and data:
+        fechar_dia(viagem_id, usuario_id, data)
+        flash("Dia fechado com sucesso.", "success")
+    return redirect(url_for("adm.rh_funcionario", usuario_id=usuario_id))
 
 
 # ── Funcionários ─────────────────────────────────────────────

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}RH — Horas dos Funcionários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">RH — Horas</h1>
+    <p class="page-sub">Resumo de horas por funcionário</p>
+  </div>
+  <a href="{{ url_for('adm.dashboard') }}" class="btn btn-ghost btn-sm">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+{% if not tecnicos %}
+<div class="empty-state">
+  <i class="ti ti-users"></i>
+  <p>Nenhum técnico cadastrado.</p>
+</div>
+{% else %}
+<div class="cards-grid">
+  {% for t in tecnicos %}
+  {% set r = resumo.get(t.id, {}) %}
+  {% set abertos = r.get('dias_abertos', 0) %}
+  <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+
+    <!-- Cabeçalho do card -->
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="func-avatar" style="width:42px;height:42px;font-size:14px;flex-shrink:0">
+        {{ t.nome[0].upper() }}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="func-nome">{{ t.nome }}</div>
+        <div class="func-meta">{{ t.email }}</div>
+      </div>
+      {% if abertos > 0 %}
+      <span class="badge badge-amber" title="{{ abertos }} dia(s) em aberto">
+        <i class="ti ti-clock"></i> {{ abertos }}
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Métricas -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+      <div style="background:rgba(37,99,235,.05);border-radius:10px;padding:10px 6px">
+        <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--text)">
+          {{ r.get('total_horas', 0) }}h
+        </div>
+        <div style="font-size:9px;color:var(--subtle);font-weight:700;letter-spacing:.04em">TOTAL</div>
+      </div>
+      <div style="background:rgba(16,185,129,.05);border-radius:10px;padding:10px 6px">
+        <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--text)">
+          {{ r.get('dias_fechados', 0) }}
+        </div>
+        <div style="font-size:9px;color:var(--subtle);font-weight:700;letter-spacing:.04em">FECHADOS</div>
+      </div>
+      <div style="background:rgba(245,158,11,.05);border-radius:10px;padding:10px 6px">
+        <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:{% if abertos > 0 %}var(--amber){% else %}var(--text){% endif %}">
+          {{ abertos }}
+        </div>
+        <div style="font-size:9px;color:var(--subtle);font-weight:700;letter-spacing:.04em">EM ABERTO</div>
+      </div>
+    </div>
+
+    <a href="{{ url_for('adm.rh_funcionario', usuario_id=t.id) }}"
+       class="btn btn-primary btn-block btn-sm">
+      <i class="ti ti-user-search"></i> Ver Detalhes
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

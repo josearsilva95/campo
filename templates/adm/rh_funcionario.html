@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}RH — {{ funcionario.nome }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ funcionario.nome }}</h1>
+    <p class="page-sub">Histórico de horas por viagem</p>
+  </div>
+  <a href="{{ url_for('adm.rh') }}" class="btn btn-ghost btn-sm">
+    <i class="ti ti-arrow-left"></i> Voltar
+  </a>
+</div>
+
+<!-- Resumo geral -->
+<div class="stats-grid" style="margin-bottom:24px">
+  <div class="metric m-blue">
+    <div class="metric-icon mi-blue"><i class="ti ti-clock-hour-4"></i></div>
+    <div class="metric-label">Total de Horas</div>
+    <div class="metric-value">{{ total_geral }}h</div>
+  </div>
+  <div class="metric m-green">
+    <div class="metric-icon mi-green"><i class="ti ti-calendar-check"></i></div>
+    <div class="metric-label">Total de Dias</div>
+    <div class="metric-value">{{ dias_total }}</div>
+  </div>
+  <div class="metric {% if dias_abertos > 0 %}m-amber{% else %}m-green{% endif %}">
+    <div class="metric-icon {% if dias_abertos > 0 %}mi-amber{% else %}mi-green{% endif %}">
+      <i class="ti ti-{% if dias_abertos > 0 %}clock{% else %}lock-check{% endif %}"></i>
+    </div>
+    <div class="metric-label">Dias em Aberto</div>
+    <div class="metric-value">{{ dias_abertos }}</div>
+  </div>
+</div>
+
+{% if not grupos %}
+<div class="empty-state">
+  <i class="ti ti-clock-off"></i>
+  <p>Nenhum ponto registrado para este funcionário.</p>
+</div>
+{% endif %}
+
+{% for grupo in grupos %}
+{% set v = grupo.viagem %}
+<div class="card mb-4">
+
+  <!-- Cabeçalho da viagem -->
+  <div class="card-header">
+    <div>
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">
+        <i class="ti ti-map-pin text-blue"></i>
+        {{ v.get('obra', 'Viagem') }}
+      </div>
+      <div class="card-meta" style="display:flex;gap:10px;margin-top:3px">
+        <span><i class="ti ti-calendar"></i> {{ v.get('data_saida', '—') }}</span>
+        {% if v.get('status') == 'ativa' %}
+          <span class="badge badge-green badge-xs">Ativa</span>
+        {% elif v.get('status') == 'encerrada' %}
+          <span class="badge badge-gray badge-xs">Encerrada</span>
+        {% else %}
+          <span class="badge badge-amber badge-xs">{{ v.get('status','') }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--text)">
+        {{ grupo.total_horas }}h
+      </div>
+      <div style="font-size:9px;color:var(--subtle);font-weight:700">
+        {{ grupo.dias_fechados }} fechado{{ 's' if grupo.dias_fechados != 1 }}
+        {% if grupo.dias_abertos > 0 %}
+        · <span style="color:var(--amber)">{{ grupo.dias_abertos }} em aberto</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela de pontos -->
+  <div class="table-wrapper" style="border-radius:0;border:none;border-top:1px solid var(--border)">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Ent 1</th>
+          <th>Saí 1</th>
+          <th>Ent 2</th>
+          <th>Saí 2</th>
+          <th>Ent 3</th>
+          <th>Saí 3</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in grupo.pontos %}
+        <tr>
+          <td style="font-weight:600;white-space:nowrap">
+            {{ p.data[8:10] }}/{{ p.data[5:7] }}/{{ p.data[:4] }}
+          </td>
+          <td>{{ p.entrada1[:5] if p.entrada1 else '—' }}</td>
+          <td>{{ p.saida1[:5]   if p.saida1   else '—' }}</td>
+          <td>{{ p.entrada2[:5] if p.entrada2 else '—' }}</td>
+          <td>{{ p.saida2[:5]   if p.saida2   else '—' }}</td>
+          <td>{{ p.entrada3[:5] if p.entrada3 else '—' }}</td>
+          <td>{{ p.saida3[:5]   if p.saida3   else '—' }}</td>
+          <td style="font-weight:700">
+            {{ '%.1f'|format(p.total_horas|float) ~ 'h' if p.total_horas else '—' }}
+          </td>
+          <td>
+            {% if p.get('fechado') %}
+              <span class="badge badge-green badge-xs"><i class="ti ti-lock"></i> Fechado</span>
+            {% else %}
+              <span class="badge badge-amber badge-xs"><i class="ti ti-clock"></i> Aberto</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if not p.get('fechado') %}
+            <form method="POST"
+                  action="{{ url_for('adm.rh_fechar_dia', usuario_id=funcionario.id) }}"
+                  style="margin:0">
+              <input type="hidden" name="viagem_id" value="{{ v.get('id') }}">
+              <input type="hidden" name="data"      value="{{ p.data }}">
+              <button type="submit" class="btn btn-xs btn-amber"
+                      onclick="return confirm('Fechar o dia {{ p.data[8:10] }}/{{ p.data[5:7] }} de {{ funcionario.nome }}?')">
+                <i class="ti ti-lock"></i> Fechar
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="7" style="font-size:10px;color:var(--muted);font-weight:700">
+            Total da viagem
+          </td>
+          <td style="font-weight:800;font-family:'Syne',sans-serif">
+            {{ grupo.total_horas }}h
+          </td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+</div>
+{% endfor %}
+{% endblock %}

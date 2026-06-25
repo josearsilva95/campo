@@ -50,6 +50,9 @@
           <a href="{{ url_for('adm.relatorio_anual') }}" class="nav-link {% if request.endpoint == 'adm.relatorio_anual' %}active{% endif %}">
             <i class="ti ti-chart-bar"></i> Balanço
           </a>
+          <a href="{{ url_for('adm.rh') }}" class="nav-link {% if request.endpoint in ('adm.rh','adm.rh_funcionario') %}active{% endif %}">
+            <i class="ti ti-clock-hour-4"></i> RH
+          </a>
         {% else %}
           <a href="{{ url_for('tecnico.dashboard') }}" class="nav-link {% if request.endpoint == 'tecnico.dashboard' %}active{% endif %}">
             <i class="ti ti-layout-dashboard"></i> Minhas Viagens

@@ -139,6 +139,63 @@ def total_horas_viagem(viagem_id: str, usuario_id: str) -> float:
     return sum(float(p["total_horas"] or 0) for p in (res.data or []))
 
 
+def rh_resumo_tecnicos(usuarios_ids: list) -> dict:
+    """Agrega total_horas, dias abertos e fechados por usuario_id."""
+    if not usuarios_ids:
+        return {}
+    res = (
+        supabase.table("pontos")
+        .select("usuario_id, total_horas, fechado")
+        .in_("usuario_id", usuarios_ids)
+        .execute()
+    )
+    resumo: dict[str, dict] = {}
+    for p in (res.data or []):
+        uid = p["usuario_id"]
+        if uid not in resumo:
+            resumo[uid] = {"total_horas": 0.0, "dias_abertos": 0, "dias_fechados": 0}
+        resumo[uid]["total_horas"] += float(p.get("total_horas") or 0)
+        if p.get("fechado"):
+            resumo[uid]["dias_fechados"] += 1
+        else:
+            resumo[uid]["dias_abertos"] += 1
+    for v in resumo.values():
+        v["total_horas"] = round(v["total_horas"], 2)
+    return resumo
+
+
+def pontos_funcionario_por_viagem(usuario_id: str) -> list:
+    """Retorna lista de viagens com seus pontos para um funcionário."""
+    res = (
+        supabase.table("pontos")
+        .select("*, viagem:viagens(id, obra, data_saida, status)")
+        .eq("usuario_id", usuario_id)
+        .order("data")
+        .execute()
+    )
+    viagens: dict[str, dict] = {}
+    for p in (res.data or []):
+        v = p.get("viagem") or {}
+        vid = v.get("id") or p.get("viagem_id")
+        if vid not in viagens:
+            viagens[vid] = {
+                "viagem": v,
+                "pontos": [],
+                "total_horas": 0.0,
+                "dias_abertos": 0,
+                "dias_fechados": 0,
+            }
+        viagens[vid]["pontos"].append(p)
+        viagens[vid]["total_horas"] += float(p.get("total_horas") or 0)
+        if p.get("fechado"):
+            viagens[vid]["dias_fechados"] += 1
+        else:
+            viagens[vid]["dias_abertos"] += 1
+    for v in viagens.values():
+        v["total_horas"] = round(v["total_horas"], 2)
+    return list(viagens.values())
+
+
 def resumo_horas_viagem(viagem_id: str) -> list:
     pontos = historico_pontos(viagem_id)
     resumo: dict[str, dict] = {}
