@@ -143,9 +143,10 @@ def rh_resumo_tecnicos(usuarios_ids: list) -> dict:
     """Agrega total_horas, dias abertos e fechados por usuario_id."""
     if not usuarios_ids:
         return {}
+    # Usa select("*") para não depender da coluna fechado existir
     res = (
         supabase.table("pontos")
-        .select("usuario_id, total_horas, fechado")
+        .select("*")
         .in_("usuario_id", usuarios_ids)
         .execute()
     )
@@ -166,34 +167,49 @@ def rh_resumo_tecnicos(usuarios_ids: list) -> dict:
 
 def pontos_funcionario_por_viagem(usuario_id: str) -> list:
     """Retorna lista de viagens com seus pontos para um funcionário."""
+    # Busca pontos do usuário
     res = (
         supabase.table("pontos")
-        .select("*, viagem:viagens(id, obra, data_saida, status)")
+        .select("*")
         .eq("usuario_id", usuario_id)
         .order("data")
         .execute()
     )
-    viagens: dict[str, dict] = {}
-    for p in (res.data or []):
-        v = p.get("viagem") or {}
-        vid = v.get("id") or p.get("viagem_id")
-        if vid not in viagens:
-            viagens[vid] = {
-                "viagem": v,
+    pontos = res.data or []
+    if not pontos:
+        return []
+
+    # Busca dados das viagens envolvidas (query separada, mais robusta)
+    viagem_ids = list({p["viagem_id"] for p in pontos})
+    vres = (
+        supabase.table("viagens")
+        .select("id, obra, data_saida, status")
+        .in_("id", viagem_ids)
+        .execute()
+    )
+    viagens_map = {v["id"]: v for v in (vres.data or [])}
+
+    # Agrupa pontos por viagem
+    grupos: dict[str, dict] = {}
+    for p in pontos:
+        vid = p["viagem_id"]
+        if vid not in grupos:
+            grupos[vid] = {
+                "viagem": viagens_map.get(vid, {"id": vid, "obra": "—", "data_saida": "", "status": ""}),
                 "pontos": [],
                 "total_horas": 0.0,
                 "dias_abertos": 0,
                 "dias_fechados": 0,
             }
-        viagens[vid]["pontos"].append(p)
-        viagens[vid]["total_horas"] += float(p.get("total_horas") or 0)
+        grupos[vid]["pontos"].append(p)
+        grupos[vid]["total_horas"] += float(p.get("total_horas") or 0)
         if p.get("fechado"):
-            viagens[vid]["dias_fechados"] += 1
+            grupos[vid]["dias_fechados"] += 1
         else:
-            viagens[vid]["dias_abertos"] += 1
-    for v in viagens.values():
-        v["total_horas"] = round(v["total_horas"], 2)
-    return list(viagens.values())
+            grupos[vid]["dias_abertos"] += 1
+    for g in grupos.values():
+        g["total_horas"] = round(g["total_horas"], 2)
+    return list(grupos.values())
 
 
 def resumo_horas_viagem(viagem_id: str) -> list:
