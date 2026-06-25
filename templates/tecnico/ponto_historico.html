@@ -27,21 +27,35 @@
           <th>Saída 2</th>
           <th>Entrada 3</th>
           <th>Saída 3</th>
+          <th>Total</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
         {% for p in pontos %}
         <tr>
-          <td>{{ p.data }}</td>
+          <td>{{ p.data[8:10] }}/{{ p.data[5:7] }}/{{ p.data[:4] }}</td>
           <td>{{ p.entrada1[:5] if p.entrada1 else '—' }}</td>
           <td>{{ p.saida1[:5]   if p.saida1   else '—' }}</td>
           <td>{{ p.entrada2[:5] if p.entrada2 else '—' }}</td>
           <td>{{ p.saida2[:5]   if p.saida2   else '—' }}</td>
           <td>{{ p.entrada3[:5] if p.entrada3 else '—' }}</td>
           <td>{{ p.saida3[:5]   if p.saida3   else '—' }}</td>
+          <td style="font-weight:700">
+            {{ '%.1f'|format(p.total_horas|float) ~ 'h' if p.total_horas else '—' }}
+          </td>
+          <td>
+            {% if p.get('fechado') %}
+              <span class="badge badge-green badge-xs"><i class="ti ti-lock"></i> Fechado</span>
+            {% else %}
+              <span class="badge badge-amber badge-xs"><i class="ti ti-clock"></i> Aberto</span>
+            {% endif %}
+          </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-center text-muted">Nenhum ponto registrado.</td></tr>
+        <tr><td colspan="9" class="text-center text-muted" style="padding:24px">
+          Nenhum ponto registrado.
+        </td></tr>
         {% endfor %}
       </tbody>
     </table>

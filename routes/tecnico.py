@@ -5,7 +5,7 @@ from functools import wraps
 from models import viagem as vm
 from models import usuario as um
 from models.gasto import listar_gastos, lancar_gasto, deletar_gasto, upload_foto, gastos_por_categoria
-from models.ponto import registrar_ponto, buscar_ponto, historico_pontos, historico_pontos_usuario, total_horas_viagem, CAMPOS_PONTO
+from models.ponto import registrar_ponto, fechar_dia, buscar_ponto, historico_pontos, historico_pontos_usuario, total_horas_viagem, CAMPOS_PONTO
 from models.parada import listar_paradas
 from models.checklist import buscar_checklist, salvar_checklist, CAMPOS_BOOL
 from models.notificacao import buscar_nao_lidas, marcar_todas_lidas, marcar_lida
@@ -178,7 +178,12 @@ def ponto(id):
 
     ponto_dia = buscar_ponto(id, uid, data_sel)
 
-    if request.method == "POST" and request.form.get("campo"):
+    if request.method == "POST":
+        if request.form.get("action") == "fechar":
+            fechar_dia(id, uid, data_sel)
+            flash("Dia fechado com sucesso! Registro salvo no histórico.", "success")
+            return redirect(url_for("tecnico.ponto_historico", id=id))
+
         campo = request.form.get("campo")
         hora  = request.form.get("hora")
         if campo and hora and campo in CAMPOS_PONTO:

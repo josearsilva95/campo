@@ -50,31 +50,38 @@ def registrar_ponto(viagem_id: str, usuario_id: str, data_str: str, campos: dict
     existente = buscar_ponto(viagem_id, usuario_id, data_str)
 
     if existente:
-        # Só salva campos que ainda não foram marcados — sem edição
-        campos_novos = {k: v for k, v in campos.items() if k in CAMPOS_PONTO and not existente.get(k)}
-        if not campos_novos:
+        # Dia fechado — sem mais edições
+        if existente.get("fechado"):
             return existente
 
-        # GPS: grava somente se ainda não tem localização
+        campos_validos = {k: v for k, v in campos.items() if k in CAMPOS_PONTO}
+        if not campos_validos:
+            return existente
+
         if lat is not None and lon is not None and existente.get("lat") is None:
-            campos_novos["lat"] = lat
-            campos_novos["lon"] = lon
+            campos_validos["lat"] = lat
+            campos_validos["lon"] = lon
 
         merged = dict(existente)
-        merged.update(campos_novos)
+        merged.update(campos_validos)
         total = calcular_horas_total(merged)
         if total is not None:
-            campos_novos["total_horas"] = total
+            campos_validos["total_horas"] = total
 
         res = (
             supabase.table("pontos")
-            .update(campos_novos)
+            .update(campos_validos)
             .eq("id", existente["id"])
             .execute()
         )
         return res.data[0] if res.data else None
     else:
-        dados = {"viagem_id": viagem_id, "usuario_id": usuario_id, "data": data_str, **campos}
+        dados = {
+            "viagem_id": viagem_id,
+            "usuario_id": usuario_id,
+            "data": data_str,
+            **{k: v for k, v in campos.items() if k in CAMPOS_PONTO},
+        }
         if lat is not None and lon is not None:
             dados["lat"] = lat
             dados["lon"] = lon
@@ -83,6 +90,19 @@ def registrar_ponto(viagem_id: str, usuario_id: str, data_str: str, campos: dict
             dados["total_horas"] = total
         res = supabase.table("pontos").insert(dados).execute()
         return res.data[0] if res.data else None
+
+
+def fechar_dia(viagem_id: str, usuario_id: str, data_str: str):
+    existente = buscar_ponto(viagem_id, usuario_id, data_str)
+    if not existente or existente.get("fechado"):
+        return existente
+    res = (
+        supabase.table("pontos")
+        .update({"fechado": True})
+        .eq("id", existente["id"])
+        .execute()
+    )
+    return res.data[0] if res.data else None
 
 
 def historico_pontos(viagem_id: str):

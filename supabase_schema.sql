@@ -131,6 +131,9 @@ CREATE TABLE IF NOT EXISTS pontos (
 --   ADD COLUMN IF NOT EXISTS lat NUMERIC(10,7),
 --   ADD COLUMN IF NOT EXISTS lon NUMERIC(10,7);
 
+-- MIGRATION para fechamento de dia (rode no SQL Editor do Supabase):
+-- ALTER TABLE pontos ADD COLUMN IF NOT EXISTS fechado boolean DEFAULT false;
+
 -- ============================================================
 -- Supabase Storage: criar bucket "notas" via dashboard
 -- Settings > Storage > New Bucket > nome: notas > Public: true

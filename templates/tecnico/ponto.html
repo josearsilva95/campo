@@ -27,70 +27,119 @@
   </form>
 </div>
 
+{% set fechado = ponto and ponto.get('fechado') %}
+
 <div class="ponto-card">
-  <div class="ponto-grid">
 
-    {% set campos_lista = [
-      ('entrada1', 'ti-login',  'Entrada 1', 'text-green'),
-      ('saida1',   'ti-logout', 'Saída 1',   'text-amber'),
-      ('entrada2', 'ti-login',  'Entrada 2', 'text-green'),
-      ('saida2',   'ti-logout', 'Saída 2',   'text-amber'),
-      ('entrada3', 'ti-login',  'Entrada 3', 'text-green'),
-      ('saida3',   'ti-logout', 'Saída 3',   'text-amber'),
-    ] %}
-
-    {# Descobre o índice do próximo campo livre (em ordem) #}
-    {% set ns = namespace(proximo=0, achou=false) %}
-    {% for campo, icon, label, color in campos_lista %}
-      {% if not ns.achou %}
-        {% if ponto and ponto.get(campo) %}
-          {% set ns.proximo = loop.index %}
-        {% else %}
-          {% set ns.achou = true %}
-        {% endif %}
-      {% endif %}
-    {% endfor %}
-
-    {% for campo, icon, label, color in campos_lista %}
-    {% set idx = loop.index0 %}
-    {% set preenchido = ponto and ponto.get(campo) %}
-    {% set e_proximo  = idx == ns.proximo %}
-    {% set bloqueado  = not preenchido and not e_proximo %}
-
-    <div class="ponto-item
-      {% if preenchido %}ponto-ok{% endif %}
-      {% if bloqueado %}ponto-bloqueado{% endif %}">
-
-      <div class="ponto-icon {{ color }}">
-        <i class="ti {{ icon }}"></i>
-      </div>
-
-      <div class="ponto-info">
-        <div class="ponto-label">{{ label }}</div>
-
-        {% if preenchido %}
-          {# Já preenchido — só exibe, sem forma de editar #}
-          <div class="ponto-hora">{{ ponto.get(campo)[:5] }}</div>
-
-        {% elif e_proximo %}
-          {# Próximo na fila — mostra formulário #}
-          <form method="POST" class="ponto-form">
-            <input type="hidden" name="data"  value="{{ data_sel }}">
-            <input type="hidden" name="campo" value="{{ campo }}">
-            <div class="ponto-input-row">
-              <input type="time" name="hora" required>
-              <button type="submit" class="btn btn-primary btn-xs">OK</button>
-            </div>
-          </form>
-
-        {% else %}
-          {# Ainda bloqueado — aguarda os anteriores #}
-          <div class="ponto-dash">Aguardando anterior</div>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
-
+  <!-- Status do dia -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <span style="font-size:12px;font-weight:700;color:var(--muted)">
+      {{ data_sel[8:10] }}/{{ data_sel[5:7] }}/{{ data_sel[:4] }}
+    </span>
+    {% if fechado %}
+      <span class="badge badge-green"><i class="ti ti-lock"></i>&nbsp;Dia Fechado</span>
+    {% elif ponto %}
+      <span class="badge badge-blue"><i class="ti ti-clock"></i>&nbsp;Em Aberto</span>
+    {% else %}
+      <span class="badge badge-gray"><i class="ti ti-minus"></i>&nbsp;Sem Registro</span>
+    {% endif %}
   </div>
+
+  {% set campos_lista = [
+    ('entrada1', 'ti-login',  'Entrada 1',  'text-green'),
+    ('saida1',   'ti-logout', 'Saída 1',    'text-amber'),
+    ('entrada2', 'ti-login',  'Entrada 2',  'text-green'),
+    ('saida2',   'ti-logout', 'Saída 2',    'text-amber'),
+    ('entrada3', 'ti-login',  'Entrada 3',  'text-green'),
+    ('saida3',   'ti-logout', 'Saída 3',    'text-amber'),
+  ] %}
+
+  <div class="ponto-grid">
+  {% for campo, icon, label, color in campos_lista %}
+  {% set valor = ponto.get(campo) if ponto else None %}
+
+  <div class="ponto-item {% if valor %}ponto-ok{% endif %} {% if fechado and not valor %}ponto-bloqueado{% endif %}">
+    <div class="ponto-icon {{ color }}">
+      <i class="ti {{ icon }}"></i>
+    </div>
+    <div class="ponto-info" style="flex:1">
+      <div class="ponto-label">{{ label }}</div>
+
+      {% if fechado %}
+        <!-- Dia fechado: somente leitura -->
+        <div class="ponto-hora">{{ valor[:5] if valor else '—' }}</div>
+
+      {% elif valor %}
+        <!-- Já marcado: campo editável -->
+        <form method="POST" class="ponto-form">
+          <input type="hidden" name="data"  value="{{ data_sel }}">
+          <input type="hidden" name="campo" value="{{ campo }}">
+          <div class="ponto-input-row">
+            <input type="time" name="hora" value="{{ valor[:5] }}" required>
+            <button type="submit" class="btn btn-primary btn-xs">
+              <i class="ti ti-check"></i> Salvar
+            </button>
+          </div>
+        </form>
+
+      {% else %}
+        <!-- Ainda não marcado: botão Marcar Agora -->
+        <form method="POST" class="ponto-form" id="form-{{ campo }}">
+          <input type="hidden" name="data"  value="{{ data_sel }}">
+          <input type="hidden" name="campo" value="{{ campo }}">
+          <input type="hidden" name="hora"  id="hora-{{ campo }}">
+          <button type="button" class="btn btn-ghost btn-sm ponto-marcar-btn"
+                  onclick="marcarAgora('{{ campo }}')">
+            <i class="ti ti-clock-plus"></i> Marcar Agora
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    {% if fechado and valor %}
+      <i class="ti ti-lock" style="color:var(--subtle);font-size:12px;align-self:center;flex-shrink:0;margin-left:6px"></i>
+    {% endif %}
+  </div>
+  {% endfor %}
+  </div>
+
+  <!-- Total do dia -->
+  {% if ponto and ponto.get('total_horas') %}
+  <div style="text-align:center;padding:14px 0;border-top:1px solid var(--border);margin-top:4px">
+    <div style="font-size:9px;color:var(--subtle);font-weight:700;letter-spacing:.06em;margin-bottom:4px">TOTAL DO DIA</div>
+    <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--text)">
+      {{ ponto.total_horas }}h
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Fechar Dia -->
+  {% if ponto and not fechado %}
+  <form method="POST" style="margin-top:16px">
+    <input type="hidden" name="data"   value="{{ data_sel }}">
+    <input type="hidden" name="action" value="fechar">
+    <button type="submit" class="btn btn-green btn-block"
+            onclick="return confirm('Fechar o dia {{ data_sel[8:10] }}/{{ data_sel[5:7] }}?\n\nApós fechar não será possível editar os horários.')">
+      <i class="ti ti-lock-check"></i> Fechar Dia
+    </button>
+  </form>
+  {% elif fechado %}
+  <div style="text-align:center;margin-top:14px;font-size:10px;color:var(--subtle)">
+    <i class="ti ti-lock"></i> Dia encerrado — consulte o histórico
+  </div>
+  {% endif %}
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function marcarAgora(campo) {
+  const agora = new Date();
+  const h = String(agora.getHours()).padStart(2, '0');
+  const m = String(agora.getMinutes()).padStart(2, '0');
+  document.getElementById('hora-' + campo).value = h + ':' + m;
+  document.getElementById('form-' + campo).submit();
+}
+</script>
 {% endblock %}
